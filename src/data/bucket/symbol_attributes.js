@@ -1,30 +1,31 @@
 // @flow
 
-import type {ViewType} from '../../util/struct_array';
+const {createLayout} = require('../../util/struct_array');
+import type {StructArrayLayout} from '../../util/struct_array';
 
-const symbolLayoutAttributes = [
+const symbolLayoutAttributes = createLayout([
     {name: 'a_pos_offset',  components: 4, type: 'Int16'},
     {name: 'a_data',        components: 4, type: 'Uint16'}
-];
+]);
 
-const dynamicLayoutAttributes = [
+const dynamicLayoutAttributes = createLayout([
     { name: 'a_projected_pos', components: 3, type: 'Float32' }
-];
+], 4);
 
-const placementOpacityAttributes = [
+const placementOpacityAttributes = createLayout([
     { name: 'a_fade_opacity', components: 1, type: 'Uint32' }
-];
+], 4);
 
-const collisionAttributes = [
+const collisionVertexAttributes = createLayout([
     { name: 'a_placed', components: 2, type: 'Uint8' }
-];
+], 4);
 
-const symbolAttributes: {[string]: Array<{name: string, type: ViewType, components?: number}>} = {
+const symbolAttributes: {[string]: StructArrayLayout} = {
     symbolLayoutAttributes,
     dynamicLayoutAttributes,
     placementOpacityAttributes,
-    collisionAttributes: collisionAttributes,
-    collisionBox: [
+    collisionVertexAttributes,
+    collisionBox: createLayout([
         // the box is centered around the anchor point
         { type: 'Int16', name: 'anchorPointX' },
         { type: 'Int16', name: 'anchorPointY' },
@@ -47,18 +48,18 @@ const symbolAttributes: {[string]: Array<{name: string, type: ViewType, componen
         // the box area
         { type: 'Int16', name: 'radius' },
         { type: 'Int16', name: 'signedDistanceFromAnchor' }
-    ],
-    collisionBoxLayout: [ // used to render collision boxes for debugging purposes
+    ]),
+    collisionBoxLayout: createLayout([ // used to render collision boxes for debugging purposes
         {name: 'a_pos',        components: 2, type: 'Int16'},
         {name: 'a_anchor_pos', components: 2, type: 'Int16'},
         {name: 'a_extrude',    components: 2, type: 'Int16'}
-    ],
-    collisionCircleLayout: [ // used to render collision circles for debugging purposes
+    ], 4),
+    collisionCircleLayout: createLayout([ // used to render collision circles for debugging purposes
         {name: 'a_pos',        components: 2, type: 'Int16'},
         {name: 'a_anchor_pos', components: 2, type: 'Int16'},
         {name: 'a_extrude',    components: 2, type: 'Int16'}
-    ],
-    placement: [
+    ], 4),
+    placement: createLayout([
         { type: 'Int16', name: 'anchorX' },
         { type: 'Int16', name: 'anchorY' },
         { type: 'Uint16', name: 'glyphStartIndex' },
@@ -73,15 +74,15 @@ const symbolAttributes: {[string]: Array<{name: string, type: ViewType, componen
         { type: 'Float32', name: 'lineOffsetY' },
         { type: 'Uint8', name: 'writingMode' },
         { type: 'Uint8', name: 'hidden' }
-    ],
-    glyphOffset: [
+    ]),
+    glyphOffset: createLayout([
         { type: 'Float32', name: 'offsetX' }
-    ],
-    lineVertex: [
+    ]),
+    lineVertex: createLayout([
         { type: 'Int16', name: 'x' },
         { type: 'Int16', name: 'y' },
         { type: 'Int16', name: 'tileUnitDistanceFromAnchor' }
-    ]
+    ])
 };
 
 module.exports = symbolAttributes;

@@ -3,6 +3,7 @@
 /* eslint-disable camelcase */
 
 const {StructArray} = require('../../util/struct_array');
+const {register} = require('../../util/web_worker_transfer');
 
 /**
  * Implementation of the StructArray layout:
@@ -30,4 +31,5 @@ class StructArrayLayout_4_2ub extends StructArray {
 
 StructArrayLayout_4_2ub.prototype.bytesPerElement = 4;
 
+register('StructArrayLayout_4_2ub', StructArrayLayout_4_2ub);
 module.exports = StructArrayLayout_4_2ub;

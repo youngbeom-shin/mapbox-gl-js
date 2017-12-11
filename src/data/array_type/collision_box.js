@@ -4,7 +4,7 @@
 
 const assert = require('assert');
 const {Struct} = require('../../util/struct_array');
-const StructArrayLayout_1_6i1ul2ui2i = require('./struct_array_layout_1_6i1ul2ui2i');
+const StructArrayLayout_24_6i1ul2ui2i = require('./struct_array_layout_24_6i1ul2ui2i');
 const {register} = require('../../util/web_worker_transfer');
 
 const Point = require('@mapbox/point-geometry');
@@ -122,7 +122,7 @@ export type CollisionBox = CollisionBoxStruct;
 /**
  * @private
  */
-class CollisionBoxStructArray extends StructArrayLayout_1_6i1ul2ui2i {
+class CollisionBoxStructArray extends StructArrayLayout_24_6i1ul2ui2i {
     getanchorPointX(index: number) { return this.int16[index * 12 + 0]; }
     getanchorPointY(index: number) { return this.int16[index * 12 + 1]; }
     getx1(index: number) { return this.int16[index * 12 + 2]; }
@@ -147,5 +147,4 @@ class CollisionBoxStructArray extends StructArrayLayout_1_6i1ul2ui2i {
 CollisionBoxStructArray.prototype.members = [{"name":"anchorPointX", "type":"Int16", "components":1, "offset":0, "size":2, "view":"int16"}, {"name":"anchorPointY", "type":"Int16", "components":1, "offset":2, "size":2, "view":"int16"}, {"name":"x1", "type":"Int16", "components":1, "offset":4, "size":2, "view":"int16"}, {"name":"y1", "type":"Int16", "components":1, "offset":6, "size":2, "view":"int16"}, {"name":"x2", "type":"Int16", "components":1, "offset":8, "size":2, "view":"int16"}, {"name":"y2", "type":"Int16", "components":1, "offset":10, "size":2, "view":"int16"}, {"name":"featureIndex", "type":"Uint32", "components":1, "offset":12, "size":4, "view":"uint32"}, {"name":"sourceLayerIndex", "type":"Uint16", "components":1, "offset":16, "size":2, "view":"uint16"}, {"name":"bucketIndex", "type":"Uint16", "components":1, "offset":18, "size":2, "view":"uint16"}, {"name":"radius", "type":"Int16", "components":1, "offset":20, "size":2, "view":"int16"}, {"name":"signedDistanceFromAnchor", "type":"Int16", "components":1, "offset":22, "size":2, "view":"int16"}];
 
 register('CollisionBoxStructArray', CollisionBoxStructArray);
-
 module.exports = CollisionBoxStructArray;

@@ -13,6 +13,7 @@ const StructArrayLayoutClass = `${camelize(name)}`;
 /* eslint-disable camelcase */
 
 const {StructArray} = require('../../util/struct_array');
+const {register} = require('../../util/web_worker_transfer');
 
 /**
  * Implementation of the StructArray layout:
@@ -94,4 +95,5 @@ for (const member of members) {
 
 <%=StructArrayLayoutClass%>.prototype.bytesPerElement = <%= size %>;
 
+register('<%=StructArrayLayoutClass%>', <%=StructArrayLayoutClass%>);
 module.exports = <%=StructArrayLayoutClass%>;

@@ -125,5 +125,4 @@ if (includeStructAccessors) {
 <%=StructArrayClass%>.prototype.members = <%-JSON.stringify(members).replace(/,/g, ', ')%>;
 
 register('<%=StructArrayClass%>', <%=StructArrayClass%>);
-
 module.exports = <%=StructArrayClass%>;

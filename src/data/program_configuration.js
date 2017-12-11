@@ -5,22 +5,16 @@ import type {GlobalProperties} from "../style-spec/expression/index";
 const packUint8ToFloat = require('../shaders/encode_attribute').packUint8ToFloat;
 const Color = require('../style-spec/util/color');
 const {register} = require('../util/web_worker_transfer');
-const paintVertexArrays = require('../data/array_type/paint_vertex_arrays');
+const paintAttributes = require('../data/paint_attributes');
 const {PossiblyEvaluatedPropertyValue} = require('../style/properties');
 
 import type Context from '../gl/context';
 import type {TypedStyleLayer} from '../style/style_layer/typed_style_layer';
-import type {ViewType, StructArray} from '../util/struct_array';
+import type {StructArray, StructArrayMember} from '../util/struct_array';
 import type VertexBuffer from '../gl/vertex_buffer';
 import type Program from '../render/program';
 import type {Feature, SourceExpression, CompositeExpression} from '../style-spec/expression';
 import type {PossiblyEvaluated} from '../style/properties';
-
-export type LayoutAttribute = {
-    name: string,
-    type: ViewType,
-    components?: number
-}
 
 export type PaintPropertyStatistics = {
     [property: string]: { max: number }
@@ -125,6 +119,7 @@ class SourceExpressionBinder<T> implements Binder<T> {
 
     PaintVertexArray: Class<StructArray>;
     paintVertexArray: StructArray;
+    paintVertexAttributes: Array<StructArrayMember>;
     paintVertexBuffer: ?VertexBuffer;
 
     constructor(expression: SourceExpression, name: string, type: string, property: string) {
@@ -132,7 +127,8 @@ class SourceExpressionBinder<T> implements Binder<T> {
         this.name = name;
         this.type = type;
         this.statistics = { max: -Infinity };
-        this.PaintVertexArray = paintVertexArrays[property].source;
+        this.PaintVertexArray = paintAttributes[property].SourceArray;
+        this.paintVertexAttributes = paintAttributes[property].sourceAttributes.members;
         this.paintVertexArray = new this.PaintVertexArray();
     }
 
@@ -165,7 +161,7 @@ class SourceExpressionBinder<T> implements Binder<T> {
 
     upload(context: Context) {
         if (this.paintVertexArray) {
-            this.paintVertexBuffer = context.createVertexBuffer(this.paintVertexArray);
+            this.paintVertexBuffer = context.createVertexBuffer(this.paintVertexArray, this.paintVertexAttributes);
         }
     }
 
@@ -190,6 +186,7 @@ class CompositeExpressionBinder<T> implements Binder<T> {
 
     PaintVertexArray: Class<StructArray>;
     paintVertexArray: StructArray;
+    paintVertexAttributes: Array<StructArrayMember>;
     paintVertexBuffer: ?VertexBuffer;
 
     constructor(expression: CompositeExpression, name: string, type: string, useIntegerZoom: boolean, zoom: number, property: string) {
@@ -199,7 +196,8 @@ class CompositeExpressionBinder<T> implements Binder<T> {
         this.useIntegerZoom = useIntegerZoom;
         this.zoom = zoom;
         this.statistics = { max: -Infinity };
-        this.PaintVertexArray = paintVertexArrays[property].composite;
+        this.PaintVertexArray = paintAttributes[property].CompositeArray;
+        this.paintVertexAttributes = paintAttributes[property].compositeAttributes.members;
         this.paintVertexArray = new this.PaintVertexArray();
     }
 
@@ -234,7 +232,7 @@ class CompositeExpressionBinder<T> implements Binder<T> {
 
     upload(context: Context) {
         if (this.paintVertexArray) {
-            this.paintVertexBuffer = context.createVertexBuffer(this.paintVertexArray);
+            this.paintVertexBuffer = context.createVertexBuffer(this.paintVertexArray, this.paintVertexAttributes);
         }
     }
 
@@ -280,7 +278,7 @@ class CompositeExpressionBinder<T> implements Binder<T> {
 class ProgramConfiguration {
     binders: { [string]: Binder<any> };
     cacheKey: string;
-    layoutAttributes: ?$ReadOnlyArray<LayoutAttribute>;
+    layoutAttributes: Array<StructArrayMember>;
 
     constructor() {
         this.binders = {};
@@ -390,7 +388,7 @@ class ProgramConfiguration {
 class ProgramConfigurationSet<Layer: TypedStyleLayer> {
     programConfigurations: {[string]: ProgramConfiguration};
 
-    constructor(layoutAttributes: ?$ReadOnlyArray<LayoutAttribute>, layers: $ReadOnlyArray<Layer>, zoom: number, filterProperties: (string) => boolean = () => true) {
+    constructor(layoutAttributes: Array<StructArrayMember>, layers: $ReadOnlyArray<Layer>, zoom: number, filterProperties: (string) => boolean = () => true) {
         this.programConfigurations = {};
         for (const layer of layers) {
             this.programConfigurations[layer.id] = ProgramConfiguration.createDynamic(layer, zoom, filterProperties);

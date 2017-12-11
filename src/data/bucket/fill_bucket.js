@@ -1,7 +1,7 @@
 // @flow
 
-const LayoutVertexArrayType = require('../array_type/fill_layout_vertex');
-const {layoutAttributes} = require('./fill_attributes');
+const {FillLayoutArray} = require('../array_type');
+const layoutAttributes = require('./fill_attributes').members;
 const {SegmentVector} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');
 const {LineIndexArray, TriangleIndexArray} = require('../index_array_type');
@@ -53,7 +53,7 @@ class FillBucket implements Bucket {
         this.layerIds = this.layers.map(layer => layer.id);
         this.index = options.index;
 
-        this.layoutVertexArray = new LayoutVertexArrayType();
+        this.layoutVertexArray = new FillLayoutArray();
         this.indexArray = new TriangleIndexArray();
         this.indexArray2 = new LineIndexArray();
         this.programConfigurations = new ProgramConfigurationSet(layoutAttributes, options.layers, options.zoom);
@@ -76,7 +76,7 @@ class FillBucket implements Bucket {
     }
 
     upload(context: Context) {
-        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray);
+        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray, layoutAttributes);
         this.indexBuffer = context.createIndexBuffer(this.indexArray);
         this.indexBuffer2 = context.createIndexBuffer(this.indexArray2);
         this.programConfigurations.upload(context);

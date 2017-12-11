@@ -4,7 +4,7 @@
 
 const assert = require('assert');
 const {Struct} = require('../../util/struct_array');
-const StructArrayLayout_1_2i2ui3ul3ui2f2ub = require('./struct_array_layout_1_2i2ui3ul3ui2f2ub');
+const StructArrayLayout_40_2i2ui3ul3ui2f2ub = require('./struct_array_layout_40_2i2ui3ul3ui2f2ub');
 const {register} = require('../../util/web_worker_transfer');
 class PlacedSymbolStruct extends Struct {
     anchorX: number;
@@ -142,7 +142,7 @@ export type PlacedSymbol = PlacedSymbolStruct;
 /**
  * @private
  */
-class PlacedSymbolStructArray extends StructArrayLayout_1_2i2ui3ul3ui2f2ub {
+class PlacedSymbolStructArray extends StructArrayLayout_40_2i2ui3ul3ui2f2ub {
     getanchorX(index: number) { return this.int16[index * 20 + 0]; }
     getanchorY(index: number) { return this.int16[index * 20 + 1]; }
     getglyphStartIndex(index: number) { return this.uint16[index * 20 + 2]; }
@@ -170,5 +170,4 @@ class PlacedSymbolStructArray extends StructArrayLayout_1_2i2ui3ul3ui2f2ub {
 PlacedSymbolStructArray.prototype.members = [{"name":"anchorX", "type":"Int16", "components":1, "offset":0, "size":2, "view":"int16"}, {"name":"anchorY", "type":"Int16", "components":1, "offset":2, "size":2, "view":"int16"}, {"name":"glyphStartIndex", "type":"Uint16", "components":1, "offset":4, "size":2, "view":"uint16"}, {"name":"numGlyphs", "type":"Uint16", "components":1, "offset":6, "size":2, "view":"uint16"}, {"name":"vertexStartIndex", "type":"Uint32", "components":1, "offset":8, "size":4, "view":"uint32"}, {"name":"lineStartIndex", "type":"Uint32", "components":1, "offset":12, "size":4, "view":"uint32"}, {"name":"lineLength", "type":"Uint32", "components":1, "offset":16, "size":4, "view":"uint32"}, {"name":"segment", "type":"Uint16", "components":1, "offset":20, "size":2, "view":"uint16"}, {"name":"lowerSize", "type":"Uint16", "components":1, "offset":22, "size":2, "view":"uint16"}, {"name":"upperSize", "type":"Uint16", "components":1, "offset":24, "size":2, "view":"uint16"}, {"name":"lineOffsetX", "type":"Float32", "components":1, "offset":28, "size":4, "view":"float32"}, {"name":"lineOffsetY", "type":"Float32", "components":1, "offset":32, "size":4, "view":"float32"}, {"name":"writingMode", "type":"Uint8", "components":1, "offset":36, "size":1, "view":"uint8"}, {"name":"hidden", "type":"Uint8", "components":1, "offset":37, "size":1, "view":"uint8"}];
 
 register('PlacedSymbolStructArray', PlacedSymbolStructArray);
-
 module.exports = PlacedSymbolStructArray;

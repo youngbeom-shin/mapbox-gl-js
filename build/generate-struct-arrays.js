@@ -9,31 +9,12 @@ const fs = require('fs');
 const ejs = require('ejs');
 const util = require('../src/util/util');
 const spec = require('../src/style-spec/reference/v8');
+const {createLayout, viewTypes} = require('../src/util/struct_array');
 
-import type {ViewType} from '../src/util/struct_array';
-
-export type StructArrayTypeParameters = {|
-    members: $ReadOnlyArray<{
-        name: string,
-        type: ViewType,
-        +components?: number,
-    }>,
-    alignment?: number
-|};
-
+import type {ViewType, StructArrayLayout} from '../src/util/struct_array';
 
 const structArrayLayoutJs = ejs.compile(fs.readFileSync('src/util/struct_array_layout.js.ejs', 'utf8'), {strict: true});
 const structArrayJs = ejs.compile(fs.readFileSync('src/util/struct_array.js.ejs', 'utf8'), {strict: true});
-
-const viewTypes = {
-    'Int8': Int8Array,
-    'Uint8': Uint8Array,
-    'Int16': Int16Array,
-    'Uint16': Uint16Array,
-    'Int32': Int32Array,
-    'Uint32': Uint32Array,
-    'Float32': Float32Array
-};
 
 const typeAbbreviations = {
     'Int8': 'b',
@@ -45,78 +26,50 @@ const typeAbbreviations = {
     'Float32': 'f'
 };
 
+const arrayTypeEntries = new Set();
 const layoutCache = {};
-const arrayCache = {};
-const filesWritten = [];
+const filesWritten = new Set();
 
-function createStructArrayType(moduleName: string, options: StructArrayTypeParameters, includeStructAccessors: boolean = false) {
-    const alignment = options.alignment === undefined ? 1 : options.alignment;
-
-    let offset = 0;
-    let maxSize = 0;
+function createStructArrayType(name: string, layout: StructArrayLayout, includeStructAccessors: boolean = false) {
     let hasAnchorPoint = false;
     const usedTypes = new Set(['Uint8']);
-
-    const usedNames = [];
-    const members = options.members.map((member) => {
-        assert(member.name.length);
-        assert(member.type in viewTypes);
-        assert(usedNames.indexOf(member.name) < 0);
-        usedNames.push(member.name);
-
-        if (usedTypes.has(member.type)) usedTypes.add(member.type);
+    const members = layout.members.map((member) => {
+        if (!usedTypes.has(member.type)) usedTypes.add(member.type);
         if (member.name === 'anchorPointX') hasAnchorPoint = true;
-
-        const typeSize = sizeOf(member.type);
-        const memberOffset = offset = align(offset, Math.max(alignment, typeSize));
-        const components = member.components || 1;
-
-        maxSize = Math.max(maxSize, typeSize);
-        offset += typeSize * components;
-
-        return {
-            name: member.name,
-            type: member.type,
-            components: components,
-            offset: memberOffset,
+        return util.extend(member, {
             size: sizeOf(member.type),
             view: member.type.toLowerCase()
-        };
+        });
     });
 
-    const key = JSON.stringify([members, alignment]);
+    const layoutModule = createStructArrayLayoutType(layout, usedTypes);
 
-    const size = align(offset, Math.max(maxSize, alignment));
+    const key = `${camelize(name)}Array`;
 
-    const layoutModule = createStructArrayLayoutType(alignment, members, size, usedTypes);
-
-    let code;
-    if (!arrayCache[key]) {
-        code = structArrayJs({
-            name: moduleName,
+    if (includeStructAccessors) {
+        const code = structArrayJs({
+            name,
             members,
-            size,
+            size: layout.size,
             usedTypes,
             hasAnchorPoint,
             layoutModule,
             includeStructAccessors
         });
-        arrayCache[key] = moduleName;
-    } else if (arrayCache[key] !== moduleName) {
-        code = `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
-// @flow
-module.exports = require('./${arrayCache[key]}');\n`;
+
+        const file = `src/data/array_type/${name}.js`;
+        assert(!filesWritten.has(file), `${file} already exists`);
+        filesWritten.add(file);
+        fs.writeFileSync(file, code);
+        arrayTypeEntries.add(`    ${key}: require('./${name}')`);
+    } else {
+        arrayTypeEntries.add(`    ${key}: require('./${layoutModule}')`);
     }
 
-    if (code) {
-        const file = `src/data/array_type/${moduleName}.js`;
-        assert(filesWritten.indexOf(file) < 0, `${file} already exists`);
-        filesWritten.push(file);
-        fs.writeFileSync(file, code);
-    }
+    return key;
 }
 
-function createStructArrayLayoutType(alignment, members, size, usedTypes) {
+function createStructArrayLayoutType({members, size}, usedTypes) {
     // combine consecutive 'members' with same underlying type, summing their
     // component counts
     members = members.reduce((memo, member) => {
@@ -129,7 +82,7 @@ function createStructArrayLayoutType(alignment, members, size, usedTypes) {
         return memo.concat(member);
     }, []);
 
-    const key = `${alignment}_${members.map(m => `${m.components}${typeAbbreviations[m.type]}`).join('')}`;
+    const key = `${size}_${members.map(m => `${m.components}${typeAbbreviations[m.type]}`).join('')}`;
     const moduleName = `struct_array_layout_${key}`;
     if (!layoutCache[key]) {
         const code = structArrayLayoutJs({
@@ -139,16 +92,12 @@ function createStructArrayLayoutType(alignment, members, size, usedTypes) {
             usedTypes
         });
         const file = `src/data/array_type/${moduleName}.js`;
-        assert(filesWritten.indexOf(file) < 0, `${file} already exists`);
-        filesWritten.push(file);
+        assert(!filesWritten.has(file), `${file} already exists`);
+        filesWritten.add(file);
         fs.writeFileSync(file, code);
         layoutCache[key] = true;
     }
     return moduleName;
-}
-
-function align(offset: number, size: number): number {
-    return Math.ceil(offset / size) * size;
 }
 
 function sizeOf(type: ViewType): number {
@@ -161,18 +110,16 @@ function camelize (str) {
     });
 }
 
+function stringify(object: Object): string {
+    return JSON.stringify(object)
+        .replace(/,/g, ', ')
+        .replace(/:/g, ': ');
+}
+
 global.camelize = camelize;
 
-createStructArrayType('pos', {
-    members: [{ name: 'a_pos', type: 'Int16', components: 2 }]
-});
-
-createStructArrayType('raster_bounds', {
-    members: [
-        { name: 'a_pos', type: 'Int16', components: 2 },
-        { name: 'a_texture_pos', type: 'Int16', components: 2 }
-    ]
-});
+createStructArrayType('pos', require('../src/data/pos_attributes'));
+createStructArrayType('raster_bounds', require('../src/data/raster_bounds_attributes'));
 
 // layout vertex arrays
 const layoutAttributes = {
@@ -183,81 +130,41 @@ const layoutAttributes = {
     line: require('../src/data/bucket/line_attributes')
 };
 for (const name in layoutAttributes) {
-    const members = layoutAttributes[name].layoutAttributes;
-    createStructArrayType(`${name.replace(/-/g, '_')}_layout_vertex`, {
-        members,
-        alignment: 4
-    });
+    createStructArrayType(`${name.replace(/-/g, '_')}_layout`, layoutAttributes[name]);
 }
 
 // symbol layer specific arrays
 const symbolAttributes = require('../src/data/bucket/symbol_attributes');
-createStructArrayType(`symbol_layout_vertex`, {
-    members: symbolAttributes.symbolLayoutAttributes,
-    alignment: 4
-});
-createStructArrayType(`symbol_dynamic_layout_vertex`, {
-    members: symbolAttributes.dynamicLayoutAttributes,
-    alignment: 4
-});
-createStructArrayType(`symbol_opacity_vertex`, {
-    members: symbolAttributes.placementOpacityAttributes,
-    alignment: 4
-});
-createStructArrayType('collision_box', {
-    members: symbolAttributes.collisionBox
-}, true);
-createStructArrayType(`collision_box_layout_vertex`, {
-    members: symbolAttributes.collisionBoxLayout,
-    alignment: 4
-});
-createStructArrayType(`collision_circle_layout_vertex`, {
-    members: symbolAttributes.collisionCircleLayout,
-    alignment: 4
-});
-createStructArrayType(`collision_vertex`, {
-    members: symbolAttributes.collisionAttributes,
-    alignment: 4
-});
-createStructArrayType('placed_symbol', {
-    members: symbolAttributes.placement
-}, true);
-createStructArrayType('glyph_offset', {
-    members: symbolAttributes.glyphOffset
-}, true);
-createStructArrayType('symbol_line_vertex', {
-    members: symbolAttributes.lineVertex
-}, true);
+createStructArrayType(`symbol_layout`, symbolAttributes.symbolLayoutAttributes);
+createStructArrayType(`symbol_dynamic_layout`, symbolAttributes.dynamicLayoutAttributes);
+createStructArrayType(`symbol_opacity`, symbolAttributes.placementOpacityAttributes);
+createStructArrayType('collision_box', symbolAttributes.collisionBox, true);
+createStructArrayType(`collision_box_layout`, symbolAttributes.collisionBoxLayout);
+createStructArrayType(`collision_circle_layout`, symbolAttributes.collisionCircleLayout);
+createStructArrayType(`collision_vertex`, symbolAttributes.collisionVertexAttributes);
+createStructArrayType('placed_symbol', symbolAttributes.placement, true);
+createStructArrayType('glyph_offset', symbolAttributes.glyphOffset, true);
+createStructArrayType('symbol_line_vertex', symbolAttributes.lineVertex, true);
 
 // feature index array
-createStructArrayType('feature_index', {
-    members: [
-        // the index of the feature in the original vectortile
-        { type: 'Uint32', name: 'featureIndex' },
-        // the source layer the feature appears in
-        { type: 'Uint16', name: 'sourceLayerIndex' },
-        // the bucket the feature appears in
-        { type: 'Uint16', name: 'bucketIndex' }
-    ]
-}, true);
+createStructArrayType('feature_index', createLayout([
+    // the index of the feature in the original vectortile
+    { type: 'Uint32', name: 'featureIndex' },
+    // the source layer the feature appears in
+    { type: 'Uint16', name: 'sourceLayerIndex' },
+    // the bucket the feature appears in
+    { type: 'Uint16', name: 'bucketIndex' }
+], 4), true);
 
 // triangle index array
-createStructArrayType('triangle_index', {
-    members: [{
-        type: 'Uint16',
-        name: 'vertices',
-        components: 3
-    }]
-});
+createStructArrayType('triangle_index', createLayout([
+    { type: 'Uint16', name: 'vertices', components: 3 }
+]));
 
 // line index array
-createStructArrayType('line_index', {
-    members: [{
-        type: 'Uint16',
-        name: 'vertices',
-        components: 2
-    }]
-});
+createStructArrayType('line_index', createLayout([
+    { type: 'Uint16', name: 'vertices', components: 2 }
+]));
 
 // paint vertex arrays
 
@@ -275,36 +182,56 @@ for (const type in spec.layer.type.values) {
     }
 }
 
-const entries = [];
+const paintAttributeEntries = new Set();
 for (const attribute of paintAttributes) {
-    const sourceArray = `${attribute.name}_source_paint_vertex`;
-    const compositeArray = `${attribute.name}_composite_paint_vertex`;
-    createStructArrayType(sourceArray, {
-        members: [{
-            name: `a_${attribute.name}`,
-            type: 'Float32',
-            components: attribute.type === 'color' ? 2 : 1
-        }],
-        alignment: 4
-    });
-    createStructArrayType(compositeArray, {
-        members: [{
-            name: `a_${attribute.name}`,
-            type: 'Float32',
-            components: attribute.type === 'color' ? 4 : 2
-        }],
-        alignment: 4
-    });
-    entries.push(`    '${attribute.property}': { source: require('./${sourceArray}'), composite: require('./${compositeArray}') }`);
+
+    const sourceArrayLayout = createLayout([{
+        name: `a_${attribute.name}`,
+        type: 'Float32',
+        components: attribute.type === 'color' ? 2 : 1
+    }], 4);
+    const compositeArrayLayout = createLayout([{
+        name: `a_${attribute.name}`,
+        type: 'Float32',
+        components: attribute.type === 'color' ? 4 : 2
+    }], 4);
+
+    paintAttributeEntries.add(`    '${attribute.property}': {
+        SourceArray: arrayTypes.${camelize(attribute.property)}SourcePaintArray,
+        sourceAttributes: ${stringify(sourceArrayLayout)},
+        CompositeArray: arrayTypes.${camelize(attribute.property)}CompositePaintArray,
+        compositeAttributes: ${stringify(compositeArrayLayout)},
+    }`);
+
+    createStructArrayType(`${attribute.property}_source_paint`, sourceArrayLayout);
+    createStructArrayType(`${attribute.property}_composite_paint`, compositeArrayLayout);
 }
 
-const paintArrayRegistry = `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
+fs.writeFileSync('src/data/paint_attributes.js',
+    `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
+// @flow
+const arrayTypes = require('./array_type');
+
+import type {StructArray, StructArrayLayout} from '../util/struct_array';
+type PaintAttributeEntry = {
+    SourceArray: Class<StructArray>,
+    sourceAttributes: StructArrayLayout,
+    CompositeArray: Class<StructArray>,
+    compositeAttributes: StructArrayLayout,
+}
+
+const paintAttributes: {[string]: PaintAttributeEntry} = {
+${[...paintAttributeEntries].join(',\n')}
+};
+
+module.exports = paintAttributes;\n`);
+
+fs.writeFileSync('src/data/array_type/index.js',
+    `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
 // @flow
 module.exports = {
-${entries.join(',\n')}
-};\n`;
-
-fs.writeFileSync('src/data/array_type/paint_vertex_arrays.js', paintArrayRegistry);
+${[...arrayTypeEntries].join(',\n')}
+};\n`);
 
 function paintAttributeName(property, type) {
     const attributeNameExceptions = {

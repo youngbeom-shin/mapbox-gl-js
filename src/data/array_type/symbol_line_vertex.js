@@ -4,7 +4,7 @@
 
 const assert = require('assert');
 const {Struct} = require('../../util/struct_array');
-const StructArrayLayout_1_3i = require('./struct_array_layout_1_3i');
+const StructArrayLayout_6_3i = require('./struct_array_layout_6_3i');
 const {register} = require('../../util/web_worker_transfer');
 class SymbolLineVertexStruct extends Struct {
     x: number;
@@ -43,7 +43,7 @@ export type SymbolLineVertex = SymbolLineVertexStruct;
 /**
  * @private
  */
-class SymbolLineVertexStructArray extends StructArrayLayout_1_3i {
+class SymbolLineVertexStructArray extends StructArrayLayout_6_3i {
     getx(index: number) { return this.int16[index * 3 + 0]; }
     gety(index: number) { return this.int16[index * 3 + 1]; }
     gettileUnitDistanceFromAnchor(index: number) { return this.int16[index * 3 + 2]; }
@@ -60,5 +60,4 @@ class SymbolLineVertexStructArray extends StructArrayLayout_1_3i {
 SymbolLineVertexStructArray.prototype.members = [{"name":"x", "type":"Int16", "components":1, "offset":0, "size":2, "view":"int16"}, {"name":"y", "type":"Int16", "components":1, "offset":2, "size":2, "view":"int16"}, {"name":"tileUnitDistanceFromAnchor", "type":"Int16", "components":1, "offset":4, "size":2, "view":"int16"}];
 
 register('SymbolLineVertexStructArray', SymbolLineVertexStructArray);
-
 module.exports = SymbolLineVertexStructArray;

@@ -1,7 +1,7 @@
 // @flow
 
-const LayoutVertexArrayType = require('../array_type/line_layout_vertex');
-const {layoutAttributes} = require('./line_attributes');
+const {LineLayoutArray} = require('../array_type');
+const layoutAttributes = require('./line_attributes').members;
 const {SegmentVector} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');
 const {TriangleIndexArray} = require('../index_array_type');
@@ -110,7 +110,7 @@ class LineBucket implements Bucket {
         this.layerIds = this.layers.map(layer => layer.id);
         this.index = options.index;
 
-        this.layoutVertexArray = new LayoutVertexArrayType();
+        this.layoutVertexArray = new LineLayoutArray();
         this.indexArray = new TriangleIndexArray();
         this.programConfigurations = new ProgramConfigurationSet(layoutAttributes, options.layers, options.zoom);
         this.segments = new SegmentVector();
@@ -131,7 +131,7 @@ class LineBucket implements Bucket {
     }
 
     upload(context: Context) {
-        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray);
+        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray, layoutAttributes);
         this.indexBuffer = context.createIndexBuffer(this.indexArray);
         this.programConfigurations.upload(context);
     }

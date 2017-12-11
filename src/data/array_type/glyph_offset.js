@@ -4,7 +4,7 @@
 
 const assert = require('assert');
 const {Struct} = require('../../util/struct_array');
-const StructArrayLayout_1_1f = require('./struct_array_layout_1_1f');
+const StructArrayLayout_4_1f = require('./struct_array_layout_4_1f');
 const {register} = require('../../util/web_worker_transfer');
 class GlyphOffsetStruct extends Struct {
     offsetX: number;
@@ -25,7 +25,7 @@ export type GlyphOffset = GlyphOffsetStruct;
 /**
  * @private
  */
-class GlyphOffsetStructArray extends StructArrayLayout_1_1f {
+class GlyphOffsetStructArray extends StructArrayLayout_4_1f {
     getoffsetX(index: number) { return this.float32[index * 1 + 0]; }
     /**
      * Return the GlyphOffsetStruct at the given location in the array.
@@ -40,5 +40,4 @@ class GlyphOffsetStructArray extends StructArrayLayout_1_1f {
 GlyphOffsetStructArray.prototype.members = [{"name":"offsetX", "type":"Float32", "components":1, "offset":0, "size":4, "view":"float32"}];
 
 register('GlyphOffsetStructArray', GlyphOffsetStructArray);
-
 module.exports = GlyphOffsetStructArray;

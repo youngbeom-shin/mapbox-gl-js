@@ -4,7 +4,8 @@ const browser = require('../util/browser');
 const mat4 = require('@mapbox/gl-matrix').mat4;
 const EXTENT = require('../data/extent');
 const VertexArrayObject = require('./vertex_array_object');
-const PosArray = require('../data/array_type/pos');
+const {PosArray} = require('../data/array_type');
+const posAttributes = require('../data/pos_attributes');
 
 import type Painter from './painter';
 import type SourceCache from '../source/source_cache';
@@ -38,7 +39,7 @@ function drawDebugTile(painter, sourceCache, coord) {
     for (let v = 0; v < vertices.length; v += 2) {
         debugTextArray.emplaceBack(vertices[v], vertices[v + 1]);
     }
-    const debugTextBuffer = context.createVertexBuffer(debugTextArray);
+    const debugTextBuffer = context.createVertexBuffer(debugTextArray, posAttributes.members);
     const debugTextVAO = new VertexArrayObject();
     debugTextVAO.bind(context, program, [debugTextBuffer]);
     gl.uniform4f(program.uniforms.u_color, 1, 1, 1, 1);

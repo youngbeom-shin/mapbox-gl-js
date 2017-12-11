@@ -1,7 +1,7 @@
 // @flow
 
-const LayoutVertexArrayType = require('../array_type/circle_layout_vertex');
-const {layoutAttributes} = require('./circle_attributes');
+const {CircleLayoutArray} = require('../array_type');
+const layoutAttributes = require('./circle_attributes').members;
 const {SegmentVector} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');
 const {TriangleIndexArray} = require('../index_array_type');
@@ -61,7 +61,7 @@ class CircleBucket<Layer: CircleStyleLayer | HeatmapStyleLayer> implements Bucke
         this.layerIds = this.layers.map(layer => layer.id);
         this.index = options.index;
 
-        this.layoutVertexArray = new LayoutVertexArrayType();
+        this.layoutVertexArray = new CircleLayoutArray();
         this.indexArray = new TriangleIndexArray();
         this.segments = new SegmentVector();
         this.programConfigurations = new ProgramConfigurationSet(layoutAttributes, options.layers, options.zoom);
@@ -82,7 +82,7 @@ class CircleBucket<Layer: CircleStyleLayer | HeatmapStyleLayer> implements Bucke
     }
 
     upload(context: Context) {
-        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray);
+        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray, layoutAttributes);
         this.indexBuffer = context.createIndexBuffer(this.indexArray);
         this.programConfigurations.upload(context);
     }

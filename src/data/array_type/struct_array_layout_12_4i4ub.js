@@ -7,11 +7,12 @@ const {register} = require('../../util/web_worker_transfer');
 
 /**
  * Implementation of the StructArray layout:
- * [0]: Int16[2]
+ * [0]: Int16[4]
+ * [8]: Uint8[4]
  *
  * @private
  */
-class StructArrayLayout_4_2i extends StructArray {
+class StructArrayLayout_12_4i4ub extends StructArray {
     uint8: Uint8Array;
     int16: Int16Array;
 
@@ -20,18 +21,25 @@ class StructArrayLayout_4_2i extends StructArray {
         this.int16 = new Int16Array(this.arrayBuffer);
     }
 
-    emplaceBack(v0: number, v1: number) {
+    emplaceBack(v0: number, v1: number, v2: number, v3: number, v4: number, v5: number, v6: number, v7: number) {
         const i = this.length;
         this.resize(this.length + 1);
-        const o2 = i * 2;
+        const o2 = i * 6;
+        const o1 = i * 12;
         this.int16[o2 + 0] = v0;
         this.int16[o2 + 1] = v1;
+        this.int16[o2 + 2] = v2;
+        this.int16[o2 + 3] = v3;
+        this.uint8[o1 + 8] = v4;
+        this.uint8[o1 + 9] = v5;
+        this.uint8[o1 + 10] = v6;
+        this.uint8[o1 + 11] = v7;
         return i;
     }
 
 }
 
-StructArrayLayout_4_2i.prototype.bytesPerElement = 4;
+StructArrayLayout_12_4i4ub.prototype.bytesPerElement = 12;
 
-register('StructArrayLayout_4_2i', StructArrayLayout_4_2i);
-module.exports = StructArrayLayout_4_2i;
+register('StructArrayLayout_12_4i4ub', StructArrayLayout_12_4i4ub);
+module.exports = StructArrayLayout_12_4i4ub;

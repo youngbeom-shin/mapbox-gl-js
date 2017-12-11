@@ -9,9 +9,11 @@ const symbolLayoutProperties = require('../style/style_layer/symbol_style_layer_
 import type Painter from '../render/painter';
 import type Transform from '../geo/transform';
 import type SymbolBucket from '../data/bucket/symbol_bucket';
-import type GlyphOffsetArray from '../data/array_type/glyph_offset';
-import type SymbolLineVertexArray from '../data/array_type/symbol_line_vertex';
-import type SymbolDynamicLayoutArray from '../data/array_type/symbol_dynamic_layout_vertex';
+import type {
+    GlyphOffsetArray,
+    SymbolLineVertexArray,
+    SymbolDynamicLayoutArray
+} from '../data/array_type';
 const WritingMode = require('../symbol/shaping').WritingMode;
 
 module.exports = {

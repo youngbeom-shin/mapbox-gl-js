@@ -1,7 +1,7 @@
 // @flow
 
-const LayoutVertexArrayType = require('../array_type/fill_extrusion_layout_vertex');
-const {layoutAttributes} = require('./fill_extrusion_attributes');
+const {FillExtrusionLayoutArray} = require('../array_type');
+const layoutAttributes = require('./fill_extrusion_attributes').members;
 const {SegmentVector, MAX_VERTEX_ARRAY_LENGTH} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');
 const {TriangleIndexArray} = require('../index_array_type');
@@ -68,7 +68,7 @@ class FillExtrusionBucket implements Bucket {
         this.layerIds = this.layers.map(layer => layer.id);
         this.index = options.index;
 
-        this.layoutVertexArray = new LayoutVertexArrayType();
+        this.layoutVertexArray = new FillExtrusionLayoutArray();
         this.indexArray = new TriangleIndexArray();
         this.programConfigurations = new ProgramConfigurationSet(layoutAttributes, options.layers, options.zoom);
         this.segments = new SegmentVector();
@@ -89,7 +89,7 @@ class FillExtrusionBucket implements Bucket {
     }
 
     upload(context: Context) {
-        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray);
+        this.layoutVertexBuffer = context.createVertexBuffer(this.layoutVertexArray, layoutAttributes);
         this.indexBuffer = context.createIndexBuffer(this.indexArray);
         this.programConfigurations.upload(context);
     }

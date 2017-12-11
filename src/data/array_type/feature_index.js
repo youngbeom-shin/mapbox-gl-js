@@ -4,7 +4,7 @@
 
 const assert = require('assert');
 const {Struct} = require('../../util/struct_array');
-const StructArrayLayout_1_1ul2ui = require('./struct_array_layout_1_1ul2ui');
+const StructArrayLayout_12_1ul2ui = require('./struct_array_layout_12_1ul2ui');
 const {register} = require('../../util/web_worker_transfer');
 class FeatureIndexStruct extends Struct {
     featureIndex: number;
@@ -31,11 +31,11 @@ class FeatureIndexStruct extends Struct {
     FeatureIndexStruct.prototype,
     'bucketIndex',
     {
-        get: function () { return this._structArray.uint16[this._pos2 + 3]; },
-        set: function (x) { this._structArray.uint16[this._pos2 + 3] = x; }
+        get: function () { return this._structArray.uint16[this._pos2 + 4]; },
+        set: function (x) { this._structArray.uint16[this._pos2 + 4] = x; }
     }
 );
-FeatureIndexStruct.prototype.size = 8;
+FeatureIndexStruct.prototype.size = 12;
 
 export type FeatureIndex = FeatureIndexStruct;
 
@@ -43,10 +43,10 @@ export type FeatureIndex = FeatureIndexStruct;
 /**
  * @private
  */
-class FeatureIndexStructArray extends StructArrayLayout_1_1ul2ui {
-    getfeatureIndex(index: number) { return this.uint32[index * 2 + 0]; }
-    getsourceLayerIndex(index: number) { return this.uint16[index * 4 + 2]; }
-    getbucketIndex(index: number) { return this.uint16[index * 4 + 3]; }
+class FeatureIndexStructArray extends StructArrayLayout_12_1ul2ui {
+    getfeatureIndex(index: number) { return this.uint32[index * 3 + 0]; }
+    getsourceLayerIndex(index: number) { return this.uint16[index * 6 + 2]; }
+    getbucketIndex(index: number) { return this.uint16[index * 6 + 4]; }
     /**
      * Return the FeatureIndexStruct at the given location in the array.
      * @param {number} index The index of the element.
@@ -57,8 +57,7 @@ class FeatureIndexStructArray extends StructArrayLayout_1_1ul2ui {
     }
 }
 
-FeatureIndexStructArray.prototype.members = [{"name":"featureIndex", "type":"Uint32", "components":1, "offset":0, "size":4, "view":"uint32"}, {"name":"sourceLayerIndex", "type":"Uint16", "components":1, "offset":4, "size":2, "view":"uint16"}, {"name":"bucketIndex", "type":"Uint16", "components":1, "offset":6, "size":2, "view":"uint16"}];
+FeatureIndexStructArray.prototype.members = [{"name":"featureIndex", "type":"Uint32", "components":1, "offset":0, "size":4, "view":"uint32"}, {"name":"sourceLayerIndex", "type":"Uint16", "components":1, "offset":4, "size":2, "view":"uint16"}, {"name":"bucketIndex", "type":"Uint16", "components":1, "offset":8, "size":2, "view":"uint16"}];
 
 register('FeatureIndexStructArray', FeatureIndexStructArray);
-
 module.exports = FeatureIndexStructArray;
