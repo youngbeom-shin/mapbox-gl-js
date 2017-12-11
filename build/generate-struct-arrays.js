@@ -12,14 +12,14 @@ const spec = require('../src/style-spec/reference/v8');
 
 import type {ViewType} from '../src/util/struct_array';
 
-export type StructArrayTypeParameters = {
+export type StructArrayTypeParameters = {|
     members: $ReadOnlyArray<{
         name: string,
         type: ViewType,
         +components?: number,
     }>,
     alignment?: number
-};
+|};
 
 
 const structArrayLayoutJs = ejs.compile(fs.readFileSync('src/util/struct_array_layout.js.ejs', 'utf8'), {strict: true});
@@ -55,7 +55,7 @@ function createStructArrayType(moduleName: string, options: StructArrayTypeParam
     let offset = 0;
     let maxSize = 0;
     let hasAnchorPoint = false;
-    const usedTypes = ['Uint8'];
+    const usedTypes = new Set(['Uint8']);
 
     const usedNames = [];
     const members = options.members.map((member) => {
@@ -64,7 +64,7 @@ function createStructArrayType(moduleName: string, options: StructArrayTypeParam
         assert(usedNames.indexOf(member.name) < 0);
         usedNames.push(member.name);
 
-        if (usedTypes.indexOf(member.type) < 0) usedTypes.push(member.type);
+        if (usedTypes.has(member.type)) usedTypes.add(member.type);
         if (member.name === 'anchorPointX') hasAnchorPoint = true;
 
         const typeSize = sizeOf(member.type);
@@ -194,11 +194,11 @@ for (const name in layoutAttributes) {
 const symbolAttributes = require('../src/data/bucket/symbol_attributes');
 createStructArrayType(`symbol_layout_vertex`, {
     members: symbolAttributes.symbolLayoutAttributes,
-    aligmnent: 4
+    alignment: 4
 });
 createStructArrayType(`symbol_dynamic_layout_vertex`, {
     members: symbolAttributes.dynamicLayoutAttributes,
-    aligmnent: 4
+    alignment: 4
 });
 createStructArrayType(`symbol_opacity_vertex`, {
     members: symbolAttributes.placementOpacityAttributes,
