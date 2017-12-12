@@ -24,8 +24,9 @@ const getWorkerPool = require('../util/global_worker_pool');
 const deref = require('../style-spec/deref');
 const diff = require('../style-spec/diff');
 const rtlTextPlugin = require('../source/rtl_text_plugin');
-const Placement = require('./placement');
+const PlacementState = require('./placement');
 const ZoomHistory = require('./zoom_history');
+const CrossTileSymbolIndex = require('../symbol/cross_tile_symbol_index');
 
 import type Map from '../ui/map';
 import type Transform from '../geo/transform';
@@ -90,7 +91,8 @@ class Style extends Evented {
     _layerOrderChanged: boolean;
 
     collisionIndex: CollisionIndex;
-    placement: Placement;
+    crossTileSymbolIndex: CrossTileSymbolIndex;
+    placement: PlacementState;
     z: number;
 
     constructor(map: Map, options: StyleOptions = {}) {
@@ -101,6 +103,7 @@ class Style extends Evented {
         this.imageManager = new ImageManager();
         this.glyphManager = new GlyphManager(map._transformRequest, options.localIdeographFontFamily);
         this.lineAtlas = new LineAtlas(256, 512);
+        this.crossTileSymbolIndex = new CrossTileSymbolIndex();
 
         this._layers = {};
         this._order  = [];
@@ -965,13 +968,15 @@ class Style extends Evented {
         const forceFullPlacement = this.getNeedsFullPlacement();
 
         if (forceFullPlacement || !this.placement || this.placement.isDone()) {
-            this.placement = new Placement(transform, this._order, forceFullPlacement, showCollisionBoxes, fadeDuration, this.placement);
+            this.placement = new PlacementState(transform, this.crossTileSymbolIndex, this._order, forceFullPlacement, showCollisionBoxes, fadeDuration, this.placement);
             this._layerOrderChanged = false;
         }
 
         this.placement.continuePlacement(this._order, this._layers, this.sourceCaches);
 
-        if (this.placement.isDone()) this.collisionIndex = this.placement.collisionIndex;
+        if (this.placement.isDone()) {
+            this.collisionIndex = this.placement.placement.collisionIndex;
+        }
 
         // needsRender is false when we have just finished a placement that didn't change the visibility of any symbols
         const needsRerender = !this.placement.isDone() || this.placement.stillFading();

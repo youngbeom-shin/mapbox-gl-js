@@ -1,25 +1,34 @@
 // @flow
 
 const browser = require('../util/browser');
-const CollisionIndex = require('../symbol/collision_index');
+const Placement = require('../symbol/placement');
 
 import type Transform from '../geo/transform';
 import type StyleLayer from './style_layer';
 import type SourceCache from '../source/source_cache';
+import type CrossTileSymbolIndex from '../symbol/cross_tile_symbol_index';
+import type Tile from'../source/tile';
 
 class LayerPlacement {
     _currentTileIndex: number;
-    _tileIDs: Array<number>;
+    _tiles: Array<Tile>;
+    _seenCrossTileIDs: { [string | number]: boolean };
 
-    constructor(tileIDs: Array<number>) {
+    constructor(tileIDs: Array<number>, styleLayer: StyleLayer, sourceCache: SourceCache, crossTileSymbolIndex: CrossTileSymbolIndex) {
         this._currentTileIndex = 0;
-        this._tileIDs = tileIDs;
+        this._seenCrossTileIDs = {};
+        this._tiles = [];
+
+        for (const tileID of tileIDs) {
+            this._tiles.push(sourceCache.getTileByID(tileID));
+        }
+        crossTileSymbolIndex.addLayer(styleLayer, this._tiles);
     }
 
-    continuePlacement(sourceCache, collisionIndex, showCollisionBoxes: boolean, layer, shouldPausePlacement) {
-        while (this._currentTileIndex < this._tileIDs.length) {
-            const tile = sourceCache.getTileByID(this._tileIDs[this._currentTileIndex]);
-            tile.placeLayer(showCollisionBoxes, collisionIndex, layer, sourceCache.id);
+    continuePlacement(sourceCache, placement: Placement, showCollisionBoxes: boolean, styleLayer: StyleLayer, shouldPausePlacement) {
+        while (this._currentTileIndex < this._tiles.length) {
+            const tile = this._tiles[this._currentTileIndex];
+            placement.placeLayerTile(styleLayer, tile, showCollisionBoxes, this._seenCrossTileIDs);
 
             this._currentTileIndex++;
             if (shouldPausePlacement()) {
@@ -29,8 +38,10 @@ class LayerPlacement {
     }
 }
 
-class Placement {
-    collisionIndex: CollisionIndex;
+class PauseablePlacement {
+    placement: Placement;
+    prevPlacement: ?Placement;
+    crossTileSymbolIndex: CrossTileSymbolIndex;
     _done: boolean;
     _currentPlacementIndex: number;
     _forceFullPlacement: boolean;
@@ -40,11 +51,13 @@ class Placement {
     _inProgressLayer: ?LayerPlacement;
     _sourceCacheTileIDs: {[string]: Array<number>};
 
-    constructor(transform: Transform, order: Array<string>,
+    constructor(transform: Transform, crossTileSymbolIndex: CrossTileSymbolIndex, order: Array<string>,
             forceFullPlacement: boolean, showCollisionBoxes: boolean, fadeDuration: number,
-            previousPlacement: ?Placement) {
+            previousPlacement: ?PauseablePlacement) {
 
-        this.collisionIndex = new CollisionIndex(transform.clone());
+        this.placement = new Placement(transform);
+        this.prevPlacement = previousPlacement ? previousPlacement.placement : null;
+        this.crossTileSymbolIndex = crossTileSymbolIndex;
         this._currentPlacementIndex = order.length - 1;
         this._forceFullPlacement = forceFullPlacement;
         this._showCollisionBoxes = showCollisionBoxes;
@@ -92,6 +105,10 @@ class Placement {
                         this._sourceCacheTileIDs[layer.source] = sourceCache.getRenderableIds().sort((a, b) => {
                             const aCoord = sourceCache.getTileByID(a).tileID;
                             const bCoord = sourceCache.getTileByID(b).tileID;
+
+                            const zDiff = bCoord.overscaledZ - aCoord.overscaledZ;
+                            if (zDiff) return zDiff;
+
                             if (aCoord.isLessThan(bCoord)) {
                                 return -1;
                             } else if (bCoord.isLessThan(aCoord)) {
@@ -101,10 +118,10 @@ class Placement {
                             }
                         });
                     }
-                    this._inProgressLayer = new LayerPlacement(this._sourceCacheTileIDs[layer.source]);
+                    this._inProgressLayer = new LayerPlacement(this._sourceCacheTileIDs[layer.source], layer, sourceCache, this.crossTileSymbolIndex);
                 }
 
-                const pausePlacement = this._inProgressLayer.continuePlacement(sourceCache, this.collisionIndex, this._showCollisionBoxes, layer, shouldPausePlacement);
+                const pausePlacement = this._inProgressLayer.continuePlacement(sourceCache, this.placement, this._showCollisionBoxes, layer, shouldPausePlacement);
 
                 if (pausePlacement) {
                     // We didn't finish placing all layers within 2ms,
@@ -119,18 +136,42 @@ class Placement {
             this._currentPlacementIndex--;
         }
 
-        for (const id in sourceCaches) {
-            sourceCaches[id].commitPlacement(this.collisionIndex, this._collisionFadeTimes);
+        this.placement.commit(this.prevPlacement, browser.now());
+
+        for (const layerId in layers) {
+            const layer = layers[layerId];
+            if (layer.type === 'symbol') {
+                const sourceCache = sourceCaches[layer.source];
+                const tileIDs = this._sourceCacheTileIDs[layer.source];
+                const tiles = tileIDs.map((id) => sourceCache.getTileByID(id));
+                this.placement.updateLayerOpacities(layer, tiles);
+            }
         }
 
         this._done = true;
 
     }
 
+    symbolFadeChange(now: number) {
+        if (this.isDone()) {
+            return this.placement.symbolFadeChange(now);
+        } else if (this.prevPlacement) {
+            return this.prevPlacement.symbolFadeChange(now);
+        } else {
+            return 0;
+        }
+    }
+
     stillFading() {
-        return browser.now() < this._collisionFadeTimes.latestStart + this._collisionFadeTimes.duration;
+        if (this.isDone()) {
+            return this.placement.hasTransitions(browser.now());
+        } else if (this.prevPlacement) {
+            return this.prevPlacement.hasTransitions(browser.now());
+        } else {
+            return false;
+        }
     }
 
 }
 
-module.exports = Placement;
+module.exports = PauseablePlacement;

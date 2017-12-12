@@ -415,7 +415,8 @@ function addSymbol(bucket: SymbolBucket,
         textOpacityState,
         iconOpacityState,
         isDuplicate: false,
-        placedTextSymbolIndices
+        placedTextSymbolIndices,
+        crossTileID: 0
     };
 }
 

@@ -19,7 +19,6 @@ import type Style from '../style/style';
 import type Dispatcher from '../util/dispatcher';
 import type Transform from '../geo/transform';
 import type {TileState} from './tile';
-import type CollisionIndex from '../symbol/collision_index';
 import type {Callback} from '../types/callback';
 
 /**
@@ -256,11 +255,6 @@ class SourceCache extends Evented {
         if (this.map) this.map.painter.tileExtentVAO.vao = null;
 
         this._updatePlacement();
-        if (this.map && this.getTileByID(id)) {
-            // Only add this tile to the CrossTileSymbolIndex if it is still in the retain set
-            // See issue #5837
-            tile.added(this.map.painter.crossTileSymbolIndex);
-        }
     }
 
     /**
@@ -584,8 +578,6 @@ class SourceCache extends Evented {
         tile = this._cache.getAndRemove((tileID.key: any));
         if (tile) {
             this._updatePlacement();
-            if (this.map)
-                tile.added(this.map.painter.crossTileSymbolIndex);
             if (this._cacheTimers[tileID.key]) {
                 clearTimeout(this._cacheTimers[tileID.key]);
                 delete this._cacheTimers[tileID.key];
@@ -649,8 +641,6 @@ class SourceCache extends Evented {
             return;
 
         this._updatePlacement();
-        if (this.map)
-            tile.removed(this.map.painter.crossTileSymbolIndex);
 
         if (tile.hasData()) {
             tile.tileID = tile.tileID.wrapped();
@@ -732,15 +722,6 @@ class SourceCache extends Evented {
         }
 
         return tileResults;
-    }
-
-    commitPlacement(collisionIndex: CollisionIndex, collisionFadeTimes: any) {
-        this._needsFullPlacement = false;
-        const ids = this.getIds();
-        for (let i = 0; i < ids.length; i++) {
-            const tile = this.getTileByID(ids[i]);
-            tile.commitPlacement(collisionIndex, collisionFadeTimes, this.transform.angle);
-        }
     }
 
     getVisibleCoordinates() {
