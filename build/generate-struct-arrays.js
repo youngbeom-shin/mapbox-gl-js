@@ -1,5 +1,13 @@
 // @flow
 
+/*
+ * Generates the following:
+ *  - StructArrayLayout_* subclasses, one for each underlying memory layout we need
+ *  - Particular, named StructArray subclasses, when fancy struct accessors are needed (e.g. CollisionBoxArray)
+ *  - data/array_type/index.js module mapping array types names to their corresponding StructArray subclasses
+ *  - data/paint_attributes.js module mapping paint property names to their corresponding vertex array types and attribute metadata
+ */
+
 'use strict'; // eslint-disable-line strict
 
 require('flow-remove-types/register');
@@ -30,6 +38,9 @@ const arrayTypeEntries = new Set();
 const layoutCache = {};
 const filesWritten = new Set();
 
+// - If necessary, write the StructArrayLayout_* class for the given layout
+// - If `includeStructAccessors`, write the fancy subclass
+// - Add an entry for `name` in the array type registry
 function createStructArrayType(name: string, layout: StructArrayLayout, includeStructAccessors: boolean = false) {
     let hasAnchorPoint = false;
     const usedTypes = new Set(['Uint8']);
