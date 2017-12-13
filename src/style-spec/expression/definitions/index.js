@@ -429,7 +429,7 @@ CompoundExpression.register(expressions, {
     ],
     'filter-has-id': [
         BooleanType,
-        [ValueType],
+        [],
         (ctx) => ctx.id() !== null
     ],
     'filter-type-in': [
