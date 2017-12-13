@@ -359,12 +359,13 @@ class ProgramConfiguration {
         }
     }
 
-    getPaintVertexBuffers() {
+    getPaintVertexBuffers(): Array<VertexBuffer> {
         const buffers = [];
         for (const property in this.binders) {
             const binder = this.binders[property];
-            if (binder instanceof SourceExpressionBinder ||
-                binder instanceof CompositeExpressionBinder
+            if ((binder instanceof SourceExpressionBinder ||
+                binder instanceof CompositeExpressionBinder) &&
+                binder.paintVertexBuffer
             ) {
                 buffers.push(binder.paintVertexBuffer);
             }
