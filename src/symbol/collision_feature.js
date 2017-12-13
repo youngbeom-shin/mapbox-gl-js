@@ -1,6 +1,6 @@
 // @flow
 
-import type CollisionBoxArray from '../data/array_type/collision_box';
+import type {CollisionBoxArray} from '../data/array_type';
 import type Point from '@mapbox/point-geometry';
 import type Anchor from './anchor';
 

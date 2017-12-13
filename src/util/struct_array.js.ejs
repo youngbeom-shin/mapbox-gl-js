@@ -1,31 +1,22 @@
 <%
 const {
-    name,
+    arrayClass,
     members,
     size,
     usedTypes,
     hasAnchorPoint,
-    layoutModule,
+    layoutClass,
     includeStructAccessors
 } = locals
 
-const StructTypeClass = `${camelize(name)}Struct`;
-const StructArrayClass = `${camelize(name)}StructArray`;
-const StructArrayLayoutClass = `${camelize(layoutModule)}`;
+const StructTypeClass = arrayClass.replace('Array', 'Struct');
+const StructArrayClass = arrayClass;
+const StructArrayLayoutClass = layoutClass;
 -%>
 // This file is generated. Edit build/generate-struct-arrays.js, then run `node build/generate-struct-arrays.js`.
 // @flow
 /* eslint-disable camelcase */
-<% if (includeStructAccessors) { %>
-const assert = require('assert');
-const {Struct} = require('../../util/struct_array');
-<% } -%>
-const <%=StructArrayLayoutClass%> = require('./<%=layoutModule%>');
-const {register} = require('../../util/web_worker_transfer');
-<% if (includeStructAccessors && hasAnchorPoint) { %>
-const Point = require('@mapbox/point-geometry');
 <%
-}
 // collect components
 const components = [];
 for (const member of members) {
@@ -123,6 +114,5 @@ if (includeStructAccessors) {
 }
 
 <%=StructArrayClass%>.prototype.members = <%-JSON.stringify(members).replace(/,/g, ', ')%>;
-
 register('<%=StructArrayClass%>', <%=StructArrayClass%>);
 module.exports = <%=StructArrayClass%>;

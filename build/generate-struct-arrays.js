@@ -12,7 +12,6 @@
 
 require('flow-remove-types/register');
 
-const assert = require('assert');
 const fs = require('fs');
 const ejs = require('ejs');
 const util = require('../src/util/util');
@@ -34,9 +33,9 @@ const typeAbbreviations = {
     'Float32': 'f'
 };
 
+const arraysWithStructAccessors = [];
 const arrayTypeEntries = new Set();
 const layoutCache = {};
-const filesWritten = new Set();
 
 // - If necessary, write the StructArrayLayout_* class for the given layout
 // - If `includeStructAccessors`, write the fancy subclass
@@ -53,31 +52,22 @@ function createStructArrayType(name: string, layout: StructArrayLayout, includeS
         });
     });
 
-    const layoutModule = createStructArrayLayoutType(layout, usedTypes);
-
-    const key = `${camelize(name)}Array`;
+    const layoutClass = createStructArrayLayoutType(layout, usedTypes);
+    const arrayClass = `${camelize(name)}Array`;
 
     if (includeStructAccessors) {
-        const code = structArrayJs({
-            name,
+        arraysWithStructAccessors.push({
+            arrayClass,
             members,
             size: layout.size,
             usedTypes,
             hasAnchorPoint,
-            layoutModule,
+            layoutClass,
             includeStructAccessors
         });
-
-        const file = `src/data/array_type/${name}.js`;
-        assert(!filesWritten.has(file), `${file} already exists`);
-        filesWritten.add(file);
-        fs.writeFileSync(file, code);
-        arrayTypeEntries.add(`    ${key}: require('./${name}')`);
     } else {
-        arrayTypeEntries.add(`    ${key}: require('./${layoutModule}')`);
+        arrayTypeEntries.add(`${arrayClass}: ${layoutClass}`);
     }
-
-    return key;
 }
 
 function createStructArrayLayoutType({members, size}, usedTypes) {
@@ -94,21 +84,17 @@ function createStructArrayLayoutType({members, size}, usedTypes) {
     }, []);
 
     const key = `${size}_${members.map(m => `${m.components}${typeAbbreviations[m.type]}`).join('')}`;
-    const moduleName = `struct_array_layout_${key}`;
+    const className = `StructArrayLayout_${key}`;
     if (!layoutCache[key]) {
-        const code = structArrayLayoutJs({
-            name: moduleName,
+        layoutCache[key] = {
+            className,
             members,
             size,
             usedTypes
-        });
-        const file = `src/data/array_type/${moduleName}.js`;
-        assert(!filesWritten.has(file), `${file} already exists`);
-        filesWritten.add(file);
-        fs.writeFileSync(file, code);
-        layoutCache[key] = true;
+        };
     }
-    return moduleName;
+
+    return className;
 }
 
 function sizeOf(type: ViewType): number {
@@ -218,6 +204,28 @@ for (const attribute of paintAttributes) {
     createStructArrayType(`${attribute.property}_composite_paint`, compositeArrayLayout);
 }
 
+const layouts = Object.keys(layoutCache).map(k => layoutCache[k]);
+
+fs.writeFileSync('src/data/array_type/index.js',
+    `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
+// @flow
+
+const assert = require('assert');
+const {StructArray} = require('../../util/struct_array');
+const {Struct} = require('../../util/struct_array');
+const {register} = require('../../util/web_worker_transfer');
+const Point = require('@mapbox/point-geometry');
+
+${layouts.map(structArrayLayoutJs).join('\n')}
+
+${arraysWithStructAccessors.map(structArrayJs).join('\n')}
+
+module.exports = {
+    ${layouts.map(layout => layout.className).join(',\n    ')},
+    ${[...arrayTypeEntries].join(',\n    ')},
+    ${arraysWithStructAccessors.map(array => array.arrayClass).join(',\n    ')}
+};\n`);
+
 fs.writeFileSync('src/data/paint_attributes.js',
     `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
 // @flow
@@ -236,13 +244,6 @@ ${[...paintAttributeEntries].join(',\n')}
 };
 
 module.exports = paintAttributes;\n`);
-
-fs.writeFileSync('src/data/array_type/index.js',
-    `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
-// @flow
-module.exports = {
-${[...arrayTypeEntries].join(',\n')}
-};\n`);
 
 function paintAttributeName(property, type) {
     const attributeNameExceptions = {

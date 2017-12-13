@@ -2,7 +2,7 @@
 'use strict';
 
 const test = require('mapbox-gl-js-test').test;
-const StructArrayLayout3i = require('../../../src/data/array_type/struct_array_layout_6_3i');
+const StructArrayLayout3i = require('../../../src/data/array_type').StructArrayLayout_6_3i;
 
 test('StructArray', (t) => {
     class TestArray extends StructArrayLayout3i {}

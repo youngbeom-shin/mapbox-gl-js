@@ -13,9 +13,11 @@ const projection = require('../symbol/projection');
 import type Transform from '../geo/transform';
 import type {OverscaledTileID} from '../source/tile_id';
 import type {SingleCollisionBox} from '../data/bucket/symbol_bucket';
-import type CollisionBoxArray from '../data/array_type/collision_box';
-import type GlyphOffsetArray from '../data/array_type/glyph_offset';
-import type SymbolLineVertexArray from '../data/array_type/symbol_line_vertex';
+import type {
+    CollisionBoxArray,
+    GlyphOffsetArray,
+    SymbolLineVertexArray
+} from '../data/array_type';
 
 // When a symbol crosses the edge that causes it to be included in
 // collision detection, it will cause changes in the symbols around
