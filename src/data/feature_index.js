@@ -16,9 +16,9 @@ const {register} = require('../util/web_worker_transfer');
 import type CollisionIndex from '../symbol/collision_index';
 import type StyleLayer from '../style/style_layer';
 import type {FeatureFilter} from '../style-spec/feature_filter';
-import type {CollisionBoxArray} from './array_type';
+import type {CollisionBoxArray} from './array_types';
 
-const {FeatureIndexArray} = require('./array_type');
+const {FeatureIndexArray} = require('./array_types');
 
 type QueryParameters = {
     scale: number,

@@ -12,7 +12,7 @@ const CollisionIndex = require('../symbol/collision_index');
 const {
     RasterBoundsArray,
     CollisionBoxArray
-} = require('../data/array_type');
+} = require('../data/array_types');
 const rasterBoundsAttributes = require('../data/raster_bounds_attributes');
 const EXTENT = require('../data/extent');
 const Point = require('@mapbox/point-geometry');

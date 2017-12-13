@@ -2,7 +2,7 @@
 
 const test = require('mapbox-gl-js-test').test;
 const VertexBuffer = require('../../../src/gl/vertex_buffer');
-const StructArrayLayout3i = require('../../../src/data/array_type').StructArrayLayout_6_3i;
+const StructArrayLayout3i = require('../../../src/data/array_types').StructArrayLayout_6_3i;
 const Context = require('../../../src/gl/context');
 
 test('VertexBuffer', (t) => {

@@ -7,6 +7,6 @@
  * @private
  */
 module.exports = {
-    LineIndexArray: require('./array_type').LineIndexArray,
-    TriangleIndexArray: require('./array_type').TriangleIndexArray
+    LineIndexArray: require('./array_types').LineIndexArray,
+    TriangleIndexArray: require('./array_types').TriangleIndexArray
 };

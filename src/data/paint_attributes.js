@@ -1,6 +1,6 @@
 // This file is generated. Edit build/generate-struct-arrays.js, then run `node build/generate-struct-arrays.js`.
 // @flow
-const arrayTypes = require('./array_type');
+const arrayTypes = require('./array_types');
 
 import type {StructArray, StructArrayLayout} from '../util/struct_array';
 type PaintAttributeEntry = {

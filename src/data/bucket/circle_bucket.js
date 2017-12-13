@@ -1,6 +1,6 @@
 // @flow
 
-const {CircleLayoutArray} = require('../array_type');
+const {CircleLayoutArray} = require('../array_types');
 const layoutAttributes = require('./circle_attributes').members;
 const {SegmentVector} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');

@@ -17,7 +17,7 @@ import type {
     CollisionBoxArray,
     GlyphOffsetArray,
     SymbolLineVertexArray
-} from '../data/array_type';
+} from '../data/array_types';
 
 // When a symbol crosses the edge that causes it to be included in
 // collision detection, it will cause changes in the symbols around

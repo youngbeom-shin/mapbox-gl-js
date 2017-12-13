@@ -1,6 +1,6 @@
 // @flow
 
-const {FillExtrusionLayoutArray} = require('../array_type');
+const {FillExtrusionLayoutArray} = require('../array_types');
 const layoutAttributes = require('./fill_extrusion_attributes').members;
 const {SegmentVector, MAX_VERTEX_ARRAY_LENGTH} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');

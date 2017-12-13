@@ -13,7 +13,7 @@ import type {
     GlyphOffsetArray,
     SymbolLineVertexArray,
     SymbolDynamicLayoutArray
-} from '../data/array_type';
+} from '../data/array_types';
 const WritingMode = require('../symbol/shaping').WritingMode;
 
 module.exports = {

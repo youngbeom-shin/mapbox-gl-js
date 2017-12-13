@@ -2,9 +2,10 @@
 
 /*
  * Generates the following:
- *  - StructArrayLayout_* subclasses, one for each underlying memory layout we need
- *  - Particular, named StructArray subclasses, when fancy struct accessors are needed (e.g. CollisionBoxArray)
- *  - data/array_type/index.js module mapping array types names to their corresponding StructArray subclasses
+ *  - data/array_types.js, which consists of:
+ *    - StructArrayLayout_* subclasses, one for each underlying memory layout we need
+ *    - Named exports mapping each conceptual array type (e.g., CircleLayoutArray) to its corresponding StructArrayLayout class
+ *    - Particular, named StructArray subclasses, when fancy struct accessors are needed (e.g. CollisionBoxArray)
  *  - data/paint_attributes.js module mapping paint property names to their corresponding vertex array types and attribute metadata
  */
 
@@ -206,14 +207,14 @@ for (const attribute of paintAttributes) {
 
 const layouts = Object.keys(layoutCache).map(k => layoutCache[k]);
 
-fs.writeFileSync('src/data/array_type/index.js',
+fs.writeFileSync('src/data/array_types.js',
     `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
 // @flow
 
 const assert = require('assert');
-const {StructArray} = require('../../util/struct_array');
-const {Struct} = require('../../util/struct_array');
-const {register} = require('../../util/web_worker_transfer');
+const {StructArray} = require('../util/struct_array');
+const {Struct} = require('../util/struct_array');
+const {register} = require('../util/web_worker_transfer');
 const Point = require('@mapbox/point-geometry');
 
 ${layouts.map(structArrayLayoutJs).join('\n')}
@@ -229,7 +230,7 @@ module.exports = {
 fs.writeFileSync('src/data/paint_attributes.js',
     `// This file is generated. Edit build/generate-struct-arrays.js, then run \`node build/generate-struct-arrays.js\`.
 // @flow
-const arrayTypes = require('./array_type');
+const arrayTypes = require('./array_types');
 
 import type {StructArray, StructArrayLayout} from '../util/struct_array';
 type PaintAttributeEntry = {

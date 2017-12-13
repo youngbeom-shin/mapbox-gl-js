@@ -18,7 +18,7 @@ const {
     PlacedSymbolArray,
     GlyphOffsetArray,
     SymbolLineVertexArray
-} = require('../array_type');
+} = require('../array_types');
 
 const Point = require('@mapbox/point-geometry');
 const {SegmentVector} = require('../segment');
@@ -43,7 +43,7 @@ import type {
     PopulateParameters
 } from '../bucket';
 import type {ProgramInterface} from '../program_configuration';
-import type {CollisionBoxArray, CollisionBox} from '../array_type';
+import type {CollisionBoxArray, CollisionBox} from '../array_types';
 import type { StructArray, StructArrayMember } from '../../util/struct_array';
 import type SymbolStyleLayer from '../../style/style_layer/symbol_style_layer';
 import type Context from '../../gl/context';

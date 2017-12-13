@@ -2,9 +2,9 @@
 // @flow
 
 const assert = require('assert');
-const {StructArray} = require('../../util/struct_array');
-const {Struct} = require('../../util/struct_array');
-const {register} = require('../../util/web_worker_transfer');
+const {StructArray} = require('../util/struct_array');
+const {Struct} = require('../util/struct_array');
+const {register} = require('../util/web_worker_transfer');
 const Point = require('@mapbox/point-geometry');
 
 // This file is generated. Edit build/generate-struct-arrays.js, then run `node build/generate-struct-arrays.js`.

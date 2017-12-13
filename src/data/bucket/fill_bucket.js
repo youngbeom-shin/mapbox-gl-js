@@ -1,6 +1,6 @@
 // @flow
 
-const {FillLayoutArray} = require('../array_type');
+const {FillLayoutArray} = require('../array_types');
 const layoutAttributes = require('./fill_attributes').members;
 const {SegmentVector} = require('../segment');
 const {ProgramConfigurationSet} = require('../program_configuration');
