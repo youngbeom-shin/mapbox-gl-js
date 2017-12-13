@@ -280,9 +280,13 @@ class ProgramConfiguration {
     cacheKey: string;
     layoutAttributes: Array<StructArrayMember>;
 
+    _buffers: Array<VertexBuffer>;
+
     constructor() {
         this.binders = {};
         this.cacheKey = '';
+
+        this._buffers = [];
     }
 
     static createDynamic<Layer: TypedStyleLayer>(layer: Layer, zoom: number, filterProperties: (string) => boolean) {
@@ -360,6 +364,14 @@ class ProgramConfiguration {
     }
 
     getPaintVertexBuffers(): Array<VertexBuffer> {
+        return this._buffers;
+    }
+
+    upload(context: Context) {
+        for (const property in this.binders) {
+            this.binders[property].upload(context);
+        }
+
         const buffers = [];
         for (const property in this.binders) {
             const binder = this.binders[property];
@@ -370,13 +382,7 @@ class ProgramConfiguration {
                 buffers.push(binder.paintVertexBuffer);
             }
         }
-        return buffers;
-    }
-
-    upload(context: Context) {
-        for (const property in this.binders) {
-            this.binders[property].upload(context);
-        }
+        this._buffers = buffers;
     }
 
     destroy() {
@@ -442,7 +448,7 @@ function paintAttributeName(property, type) {
 register('ConstantBinder', ConstantBinder);
 register('SourceExpressionBinder', SourceExpressionBinder, {omit: ['PaintVertexArray']});
 register('CompositeExpressionBinder', CompositeExpressionBinder, {omit: ['PaintVertexArray']});
-register('ProgramConfiguration', ProgramConfiguration);
+register('ProgramConfiguration', ProgramConfiguration, {omit: ['_buffers']});
 register('ProgramConfigurationSet', ProgramConfigurationSet);
 
 module.exports = {
