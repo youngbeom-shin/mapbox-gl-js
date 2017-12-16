@@ -85,8 +85,8 @@ interface Binder<T> {
                 globals: GlobalProperties,
                 currentValue: PossiblyEvaluatedPropertyValue<T>): void;
 
-    getUniforms(globals: GlobalProperties,
-                currentValue: PossiblyEvaluatedPropertyValue<T>): any;  // TOOD
+    // getUniforms(globals: GlobalProperties,
+    //             currentValue: PossiblyEvaluatedPropertyValue<T>): any;  // TOOD
 }
 
 class ConstantBinder<T> implements Binder<T> {

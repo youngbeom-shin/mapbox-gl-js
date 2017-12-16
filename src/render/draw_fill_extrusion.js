@@ -11,7 +11,7 @@ const vec3 = glMatrix.vec3;
 const StencilMode = require('../gl/stencil_mode');
 
 const {UniformMatrix} = require('./uniform_binding');
-const {fillExtrusionUniforms, fillExtrusionPatternUniforms} = require('./program/fill_extrusion_program');
+const {fillExtrusionUniforms/*, fillExtrusionPatternUniforms*/} = require('./program/fill_extrusion_program');
 
 import type Painter from './painter';
 import type SourceCache from '../source/source_cache';
@@ -29,7 +29,7 @@ function draw(painter: Painter, source: SourceCache, layer: FillExtrusionStyleLa
     if (painter.renderPass === 'offscreen') {
         drawToExtrusionFramebuffer(painter, layer);
 
-        const depthMode = new DepthMode(gl.LEQUAL, DepthMode.ReadWrite, [0, 1]),
+        const depthMode = new DepthMode(painter.context.gl.LEQUAL, DepthMode.ReadWrite, [0, 1]),
             stencilMode = StencilMode.disabled(),
             colorMode = painter.colorModeForRenderPass();
 
@@ -110,7 +110,7 @@ function drawExtrusion(painter, source, layer, coord, depthMode, stencilMode, co
 
     const programConfiguration = bucket.programConfigurations.get(layer.id);
     const program = painter.useProgram(image ? 'fillExtrusionPattern' : 'fillExtrusion',
-        programConfiguration, image ? fillExtrusionPatternUniforms : fillExtrusionUniforms);
+        programConfiguration, /*image ? fillExtrusionPatternUniforms :*/ fillExtrusionUniforms);
 
     // constructing a program should now also
         // * initialize all static uniform bindings
