@@ -19,6 +19,12 @@ import type {FeatureFilter} from '../style-spec/feature_filter';
 import type {TransitionParameters} from './properties';
 import type EvaluationParameters from './evaluation_parameters';
 
+type Passes = {|
+    offscreen?: boolean,
+    opaque?: boolean,
+    translucent?: boolean
+|};
+
 const TRANSITION_SUFFIX = '-transition';
 
 class StyleLayer extends Evented {
@@ -51,6 +57,8 @@ class StyleLayer extends Evented {
                               bearing: number,
                               pixelsToTileUnits: number) => boolean;
 
+    hasPass: Passes;
+
     constructor(layer: LayerSpecification, properties: {layout?: Properties<*>, paint: Properties<*>}) {
         super();
 
@@ -60,6 +68,11 @@ class StyleLayer extends Evented {
         this.minzoom = layer.minzoom;
         this.maxzoom = layer.maxzoom;
         this.visibility = 'visible';
+        this.hasPass = {
+            offscreen: false,
+            opaque: false,
+            translucent: false
+        };
 
         if (layer.type !== 'background') {
             this.source = layer.source;
@@ -193,10 +206,6 @@ class StyleLayer extends Evented {
             // Workaround for https://github.com/mapbox/mapbox-gl-js/issues/2407
             style: {glyphs: true, sprite: true}
         }));
-    }
-
-    hasOffscreenPass() {
-        return false;
     }
 
     resize() {

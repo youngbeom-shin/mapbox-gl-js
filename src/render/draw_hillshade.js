@@ -15,6 +15,9 @@ module.exports = drawHillshade;
 
 function drawHillshade(painter: Painter, sourceCache: SourceCache, layer: HillshadeStyleLayer, tileIDs: Array<OverscaledTileID>) {
     if (painter.renderPass !== 'offscreen' && painter.renderPass !== 'translucent') return;
+    if (layer.paint.get('hillshade-exaggeration') === 0) {
+        return;
+    }
 
     const context = painter.context;
 

@@ -293,7 +293,7 @@ class Painter {
             for (let i = 0; i < layerIds.length; i++) {
                 const layer = this.style._layers[layerIds[i]];
 
-                if (!layer.hasOffscreenPass() || layer.isHidden(this.transform.zoom)) continue;
+                if (!layer.hasPass.offscreen || layer.isHidden(this.transform.zoom)) continue;
 
                 if (layer.source !== (sourceCache && sourceCache.id)) {
                     sourceCache = this.style.sourceCaches[layer.source];
@@ -334,6 +334,8 @@ class Painter {
             for (this.currentLayer; this.currentLayer >= 0; this.currentLayer--) {
                 const layer = this.style._layers[layerIds[this.currentLayer]];
 
+                if (!layer.hasPass.opaque) continue;
+
                 if (layer.source !== (sourceCache && sourceCache.id)) {
                     sourceCache = this.style.sourceCaches[layer.source];
                     coords = [];
@@ -362,6 +364,8 @@ class Painter {
 
             for (this.currentLayer; this.currentLayer < layerIds.length; this.currentLayer++) {
                 const layer = this.style._layers[layerIds[this.currentLayer]];
+
+                if (!layer.hasPass.translucent) continue;
 
                 if (layer.source !== (sourceCache && sourceCache.id)) {
                     sourceCache = this.style.sourceCaches[layer.source];

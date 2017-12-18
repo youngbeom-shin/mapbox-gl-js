@@ -53,6 +53,7 @@ class LineStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = { translucent: true };
     }
 
     recalculate(parameters: EvaluationParameters) {

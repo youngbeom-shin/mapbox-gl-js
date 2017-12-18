@@ -18,10 +18,10 @@ class HillshadeStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
-    }
-
-    hasOffscreenPass() {
-        return this.paint.get('hillshade-exaggeration') !== 0 && this.visibility !== 'none';
+        this.hasPass = {
+            offscreen: true,
+            translucent: true
+        };
     }
 }
 

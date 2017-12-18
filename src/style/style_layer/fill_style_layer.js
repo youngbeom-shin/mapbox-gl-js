@@ -24,6 +24,10 @@ class FillStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = {
+            opaque: true,
+            translucent: true
+        };
     }
 
     recalculate(parameters: EvaluationParameters) {

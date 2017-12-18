@@ -25,6 +25,10 @@ class FillExtrusionStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = {
+            offscreen: true,
+            translucent: true
+        };
     }
 
     createBucket(parameters: BucketParameters<FillExtrusionStyleLayer>) {
@@ -46,10 +50,6 @@ class FillExtrusionStyleLayer extends StyleLayer {
             this.paint.get('fill-extrusion-translate-anchor'),
             bearing, pixelsToTileUnits);
         return multiPolygonIntersectsMultiPolygon(translatedPolygon, geometry);
-    }
-
-    hasOffscreenPass() {
-        return this.paint.get('fill-extrusion-opacity') !== 0 && this.visibility !== 'none';
     }
 
     resize() {

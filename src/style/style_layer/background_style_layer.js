@@ -18,6 +18,10 @@ class BackgroundStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = {
+            opaque: true,
+            translucent: true
+        };
     }
 }
 

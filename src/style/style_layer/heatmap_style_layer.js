@@ -31,6 +31,10 @@ class HeatmapStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = {
+            offscreen: true,
+            translucent: true
+        };
 
         // make sure color ramp texture is generated for default heatmap color too
         this._updateColorRamp();
@@ -73,10 +77,6 @@ class HeatmapStyleLayer extends StyleLayer {
 
     queryIntersectsFeature(): boolean  {
         return false;
-    }
-
-    hasOffscreenPass() {
-        return this.paint.get('heatmap-opacity') !== 0 && this.visibility !== 'none';
     }
 }
 

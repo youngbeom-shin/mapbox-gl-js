@@ -18,6 +18,7 @@ class RasterStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = { translucent: true };
     }
 }
 

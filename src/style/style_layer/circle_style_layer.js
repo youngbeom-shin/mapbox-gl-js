@@ -23,6 +23,7 @@ class CircleStyleLayer extends StyleLayer {
 
     constructor(layer: LayerSpecification) {
         super(layer, properties);
+        this.hasPass = { translucent: true };
     }
 
     createBucket(parameters: BucketParameters<*>) {
