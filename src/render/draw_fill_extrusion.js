@@ -107,10 +107,11 @@ function drawExtrusion(painter, source, layer, coord, depthMode, stencilMode, co
     const gl = context.gl;
 
     const image = layer.paint.get('fill-extrusion-pattern');
+    if (image && pattern.isPatternMissing(image, painter)) return;
 
     const programConfiguration = bucket.programConfigurations.get(layer.id);
     const program = painter.useProgram(image ? 'fillExtrusionPattern' : 'fillExtrusion',
-        programConfiguration, /*image ? fillExtrusionPatternUniforms :*/ fillExtrusionUniforms);
+        programConfiguration, /*image ? fillExtrusionPatternUniforms TODO implement bindings :*/ fillExtrusionUniforms);
 
     // constructing a program should now also
         // * initialize all static uniform bindings
@@ -121,13 +122,6 @@ function drawExtrusion(painter, source, layer, coord, depthMode, stencilMode, co
         // * set all non-static uniforms
 
     programConfiguration.setUniforms(context, program, layer.paint, {zoom: painter.transform.zoom});
-
-    if (image) {
-        if (pattern.isPatternMissing(image, painter)) return;
-        pattern.prepare(image, painter, program);
-        pattern.setTile(tile, painter, program);
-        gl.uniform1f(program.uniforms.u_height_factor, -Math.pow(2, coord.overscaledZ) / tile.tileSize / 8);
-    }
 
     const light = painter.style.light;
 
@@ -151,7 +145,15 @@ function drawExtrusion(painter, source, layer, coord, depthMode, stencilMode, co
         u_lightpos: lightPos,
         u_lightintensity: light.properties.get('intensity'),
         u_lightcolor: [lightColor.r, lightColor.g, lightColor.b]
-    })
+    });
+
+    if (image) {
+        program.boundUniforms.set({
+            ...pattern.prepare(image, painter, program),
+            ...pattern.setTile(tile, painter, program),
+            u_height_factor: -Math.pow(2, coord.overscaledZ) / tile.tileSize / 8
+        });
+    }
 
     program._draw(
         context,
