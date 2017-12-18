@@ -19,6 +19,7 @@ const Texture = require('../render/texture');
 const {SegmentVector} = require('../data/segment');
 const {TriangleIndexArray} = require('../data/index_array_type');
 const browser = require('../util/browser');
+const SymbolBucket = require('../data/bucket/symbol_bucket');
 
 const CLOCK_SKEW_RETRY_TIMEOUT = 30000;
 
@@ -227,7 +228,8 @@ class Tile {
                           scale: number,
                           params: { filter: FilterSpecification, layers: Array<string> },
                           bearing: number,
-                          sourceID: string): {[string]: Array<{ featureIndex: number, feature: GeoJSONFeature }>} {
+                          sourceID: string,
+                          collisionIndex: CollisionIndex): {[string]: Array<{ featureIndex: number, feature: GeoJSONFeature }>} {
         if (!this.featureIndex || !this.collisionBoxArray)
             return {};
 
@@ -248,7 +250,8 @@ class Tile {
             params: params,
             additionalRadius: additionalRadius,
             collisionBoxArray: this.collisionBoxArray,
-            sourceID: sourceID
+            sourceID: sourceID,
+            collisionIndex: collisionIndex
         }, layers);
     }
 
@@ -401,6 +404,15 @@ class Tile {
             } else {
                 // Max value for `setTimeout` implementations is a 32 bit integer; cap this accordingly
                 return Math.min(this.expirationTime - new Date().getTime(), Math.pow(2, 31) - 1);
+            }
+        }
+    }
+
+    resetCrossTileIDs() {
+        for (const layerID in this.buckets) {
+            const bucket = this.buckets[layerID];
+            if (bucket instanceof SymbolBucket) {
+                bucket.bucketInstanceId = 0;
             }
         }
     }

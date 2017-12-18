@@ -66,14 +66,16 @@ class Placement {
     opacities: { [string | number]: JointOpacityState };
     commitTime: number;
     stale: boolean;
+    fadeDuration: number;
 
-    constructor(transform: Transform) {
+    constructor(transform: Transform, fadeDuration: number) {
         this.transform = transform.clone();
         this.collisionIndex = new CollisionIndex(this.transform);
         this.recentUntil = -Infinity;
         this.placements = {};
         this.opacities = {};
         this.stale = false;
+        this.fadeDuration = fadeDuration;
     }
 
     placeLayer(styleLayer: StyleLayer, tiles: Array<Tile>, showCollisionBoxes: boolean) {
@@ -134,7 +136,7 @@ class Placement {
 
                 if (!symbolInstance.collisionArrays) {
                     symbolInstance.collisionArrays = bucket.deserializeCollisionBoxes(
-                            ((collisionBoxArray: any): CollisionBoxArray), // TODO
+                            ((collisionBoxArray: any): CollisionBoxArray),
                             symbolInstance.textBoxStartIndex, symbolInstance.textBoxEndIndex, symbolInstance.iconBoxStartIndex, symbolInstance.iconBoxEndIndex);
                 }
 
@@ -194,8 +196,7 @@ class Placement {
 
                 assert(symbolInstance.crossTileID !== 0);
 
-                const offscreen = false; // TODO
-                this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText, placeIcon, offscreen);
+                this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText, placeIcon, false);
                 seenCrossTileIDs[symbolInstance.crossTileID] = true;
             }
         }
@@ -206,8 +207,8 @@ class Placement {
 
         let placementChanged = false;
 
-        const increment = prevPlacement ?
-            (this.commitTime - prevPlacement.commitTime) / 300 :
+        const increment = (prevPlacement && this.fadeDuration !== 0) ?
+            (this.commitTime - prevPlacement.commitTime) / this.fadeDuration :
             1;
 
         const prevOpacities = prevPlacement ? prevPlacement.opacities : {};
@@ -298,7 +299,7 @@ class Placement {
 
             if (!symbolInstance.collisionArrays) {
                 symbolInstance.collisionArrays = bucket.deserializeCollisionBoxes(
-                        ((collisionBoxArray: any): CollisionBoxArray), // TODO
+                        ((collisionBoxArray: any): CollisionBoxArray),
                         symbolInstance.textBoxStartIndex, symbolInstance.textBoxEndIndex, symbolInstance.iconBoxStartIndex, symbolInstance.iconBoxEndIndex);
             }
 
@@ -323,8 +324,7 @@ class Placement {
         }
 
         bucket.sortFeatures(this.transform.angle);
-        //bucket.updateOpacity();
-        // TODO move this to the upload pass
+
         if (bucket.hasTextData() && bucket.text.opacityVertexBuffer) {
             bucket.text.opacityVertexBuffer.updateData(bucket.text.opacityVertexArray);
         }
@@ -343,8 +343,9 @@ class Placement {
     }
 
     symbolFadeChange(now: number) {
-        // TODO handle non-continuous mode?
-        return (now - this.commitTime) / 300;
+        return this.fadeDuration === 0 ?
+            1 :
+            (now - this.commitTime) / this.fadeDuration;
     }
 
     hasTransitions(now: number) {
@@ -352,14 +353,12 @@ class Placement {
     }
 
     stillRecent(now: number) {
-        // TODO handle non-continuous mode?
         return this.recentUntil > now;
     }
 
     setRecent(now: number) {
         this.stale = false;
-        // TODO handle non-continuous mode?
-        this.recentUntil = now + 300;
+        this.recentUntil = now + this.fadeDuration;
     }
 
     setStale() {
