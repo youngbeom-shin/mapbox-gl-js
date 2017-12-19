@@ -267,8 +267,8 @@ class Placement {
 
             seenCrossTileIDs[symbolInstance.crossTileID] = true;
 
-            const hasText = !(symbolInstance.textBoxStartIndex === symbolInstance.textBoxEndIndex);
-            const hasIcon = !(symbolInstance.iconBoxStartIndex === symbolInstance.iconBoxEndIndex);
+            const hasText = symbolInstance.numGlyphVertices > 0 || symbolInstance.numVerticalGlyphVertices > 0;
+            const hasIcon = symbolInstance.numIconVertices > 0;
 
             if (hasText) {
                 const packedOpacity = packOpacity(opacityState.text);
