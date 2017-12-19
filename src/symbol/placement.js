@@ -78,13 +78,6 @@ class Placement {
         this.fadeDuration = fadeDuration;
     }
 
-    placeLayer(styleLayer: StyleLayer, tiles: Array<Tile>, showCollisionBoxes: boolean) {
-        const seenCrossTileIDs = {};
-        for (const tile of tiles) {
-            this.placeLayerTile(styleLayer, tile, showCollisionBoxes, seenCrossTileIDs);
-        }
-    }
-
     placeLayerTile(styleLayer: StyleLayer, tile: Tile, showCollisionBoxes: boolean, seenCrossTileIDs: { [string | number]: boolean }) {
         const symbolBucket = ((tile.getBucket(styleLayer): any): SymbolBucket);
         if (!symbolBucket) return;
@@ -109,12 +102,12 @@ class Placement {
                 pixelsToTileUnits(tile, 1, this.transform.zoom));
 
         this.placeLayerBucket(symbolBucket, posMatrix, textLabelPlaneMatrix, iconLabelPlaneMatrix, scale, textPixelRatio,
-                showCollisionBoxes, seenCrossTileIDs, tile.collisionBoxArray, tile.tileID.key, styleLayer.source);
+                showCollisionBoxes, seenCrossTileIDs, tile.collisionBoxArray, tile.tileID.key, styleLayer.source, tile.justReloaded);
     }
 
     placeLayerBucket(bucket: SymbolBucket, posMatrix: mat4, textLabelPlaneMatrix: mat4, iconLabelPlaneMatrix: mat4,
             scale: number, textPixelRatio: number, showCollisionBoxes: boolean, seenCrossTileIDs: { [string | number]: boolean },
-            collisionBoxArray: ?CollisionBoxArray, tileKey: number, sourceID: string) {
+            collisionBoxArray: ?CollisionBoxArray, tileKey: number, sourceID: string, justReloaded: boolean) {
 
         const layout = bucket.layers[0].layout;
 
@@ -196,7 +189,7 @@ class Placement {
 
                 assert(symbolInstance.crossTileID !== 0);
 
-                this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText, placeIcon, false);
+                this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText, placeIcon, justReloaded);
                 seenCrossTileIDs[symbolInstance.crossTileID] = true;
             }
         }
@@ -260,12 +253,17 @@ class Placement {
         if (bucket.hasCollisionBoxData()) bucket.collisionBox.collisionVertexArray.clear();
         if (bucket.hasCollisionCircleData()) bucket.collisionCircle.collisionVertexArray.clear();
 
+        const layout = bucket.layers[0].layout;
+        const defaultOpacityState = new JointOpacityState(null, 0,
+                layout.get('text-allow-overlap'),
+                layout.get('icon-allow-overlap'), true);
+
         for (let s = 0; s < bucket.symbolInstances.length; s++) {
             const symbolInstance = bucket.symbolInstances[s];
             const isDuplicate = seenCrossTileIDs[symbolInstance.crossTileID];
             const opacityState = (!isDuplicate && this.opacities[symbolInstance.crossTileID]) ?
                 this.opacities[symbolInstance.crossTileID] :
-                new JointOpacityState(null, 0, false, false, false);
+                defaultOpacityState;
 
             seenCrossTileIDs[symbolInstance.crossTileID] = true;
 

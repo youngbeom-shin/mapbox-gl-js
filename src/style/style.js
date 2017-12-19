@@ -990,6 +990,12 @@ class Style extends Evented {
                     this.collisionIndex = this.placement.collisionIndex;
                 }
                 this.placement.setRecent(browser.now());
+
+                for (const id in layerTiles) {
+                    for (const tile of layerTiles[id]) {
+                        tile.justReloaded = false;
+                    }
+                }
             }
 
         } else {
