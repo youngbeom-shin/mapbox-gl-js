@@ -82,7 +82,7 @@ class TileLayerIndex {
     //     more tolerant of small differences between tiles.
     getScaledCoordinates(symbolInstance: SymbolInstance, childTileID: OverscaledTileID) {
         const zDifference = childTileID.canonical.z - this.tileID.canonical.z;
-        const scale = roundingFactor / (1 << zDifference);
+        const scale = roundingFactor / Math.pow(2, zDifference);
         const anchor = symbolInstance.anchor;
         return {
             x: Math.floor((childTileID.canonical.x * EXTENT + anchor.x) * scale),
