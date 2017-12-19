@@ -132,16 +132,17 @@ class CrossTileIDs {
 
 class CrossTileSymbolLayerIndex {
     indexes: {[zoom: string | number]: {[tileId: string | number]: TileLayerIndex}};
-    maxBucketInstanceId: number;
 
     constructor() {
         this.indexes = {};
-        this.maxBucketInstanceId = 0;
     }
 
     addBucket(tileID: OverscaledTileID, bucket: SymbolBucket, crossTileIDs: CrossTileIDs) {
-        if (bucket.bucketInstanceId) return;
-        bucket.bucketInstanceId = ++this.maxBucketInstanceId;
+        if (this.indexes[tileID.overscaledZ] &&
+            this.indexes[tileID.overscaledZ][tileID.key] &&
+            this.indexes[tileID.overscaledZ][tileID.key].bucketInstanceId === bucket.bucketInstanceId) {
+            return false;
+        }
 
         let minZoom = 25;
         let maxZoom = 0;
@@ -176,10 +177,13 @@ class CrossTileSymbolLayerIndex {
                 // symbol did not match any known symbol, assign a new id
                 symbolInstance.crossTileID = crossTileIDs.generate();
             }
-        } if (this.indexes[tileID.overscaledZ] === undefined) {
+        }
+        if (this.indexes[tileID.overscaledZ] === undefined) {
             this.indexes[tileID.overscaledZ] = {};
         }
         this.indexes[tileID.overscaledZ][tileID.key] = new TileLayerIndex(tileID, bucket.symbolInstances, bucket.bucketInstanceId);
+
+        return true;
     }
 
     removeStaleBuckets(currentIDs: { [string | number]: boolean }) {
@@ -200,10 +204,12 @@ class CrossTileSymbolLayerIndex {
 class CrossTileSymbolIndex {
     layerIndexes: {[layerId: string]: CrossTileSymbolLayerIndex};
     crossTileIDs: CrossTileIDs;
+    maxBucketInstanceId: number;
 
     constructor() {
         this.layerIndexes = {};
         this.crossTileIDs = new CrossTileIDs();
+        this.maxBucketInstanceId = 0;
     }
 
     addLayer(styleLayer: StyleLayer, tiles: Array<Tile>) {
@@ -220,10 +226,12 @@ class CrossTileSymbolIndex {
             if (!symbolBucket) continue;
 
             if (!symbolBucket.bucketInstanceId) {
-                symbolBucketsChanged = true;
+                symbolBucket.bucketInstanceId = ++this.maxBucketInstanceId;
             }
 
-            layerIndex.addBucket(tile.tileID, symbolBucket, this.crossTileIDs);
+            if (layerIndex.addBucket(tile.tileID, symbolBucket, this.crossTileIDs)) {
+                symbolBucketsChanged = true;
+            }
             currentBucketIDs[symbolBucket.bucketInstanceId] = true;
         }
 

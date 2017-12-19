@@ -632,8 +632,6 @@ class SourceCache extends Evented {
         if (tile.uses > 0)
             return;
 
-        tile.resetCrossTileIDs();
-
         if (tile.hasData()) {
             tile.tileID = tile.tileID.wrapped();
             const wrappedId = tile.tileID.key;
