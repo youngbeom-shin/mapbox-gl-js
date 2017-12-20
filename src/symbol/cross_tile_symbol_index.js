@@ -125,6 +125,10 @@ class CrossTileSymbolLayerIndex {
             return false;
         }
 
+        for (const symbolInstance of bucket.symbolInstances) {
+            symbolInstance.crossTileID = 0;
+        }
+
         for (const zoom in this.indexes) {
             const zoomIndexes = this.indexes[zoom];
             if (Number(zoom) > tileID.overscaledZ) {
