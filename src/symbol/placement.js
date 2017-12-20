@@ -121,11 +121,11 @@ class Placement {
 
                 let placeText = false;
                 let placeIcon = false;
-                //let offscreen = true;
+                let offscreen = true;
 
-                let placedGlyphBoxes = [];
-                let placedGlyphCircles = [];
-                let placedIconBoxes = [];
+                let placedGlyphBoxes = null;
+                let placedGlyphCircles = null;
+                let placedIconBoxes = null;
 
                 if (!symbolInstance.collisionArrays) {
                     symbolInstance.collisionArrays = bucket.deserializeCollisionBoxes(
@@ -136,7 +136,8 @@ class Placement {
                 if (symbolInstance.collisionArrays.textBox) {
                     placedGlyphBoxes = this.collisionIndex.placeCollisionBox(symbolInstance.collisionArrays.textBox,
                             layout.get('text-allow-overlap'), textPixelRatio, posMatrix);
-                    placeText = placedGlyphBoxes.length > 0;
+                    placeText = placedGlyphBoxes.box.length > 0;
+                    offscreen = offscreen && placedGlyphBoxes.offscreen;
                 }
                 const textCircles = symbolInstance.collisionArrays.textCircles;
                 if (textCircles) {
@@ -159,13 +160,15 @@ class Placement {
                     // In theory there should always be at least one circle placed
                     // in this case, but for now quirks in text-anchor
                     // and text-offset may prevent that from being true.
-                    placeText = layout.get('text-allow-overlap') || placedGlyphCircles.length > 0;
+                    placeText = layout.get('text-allow-overlap') || placedGlyphCircles.circles.length > 0;
+                    offscreen = offscreen && placedGlyphCircles.offscreen;
                 }
 
                 if (symbolInstance.collisionArrays.iconBox) {
                     placedIconBoxes = this.collisionIndex.placeCollisionBox(symbolInstance.collisionArrays.iconBox,
                             layout.get('icon-allow-overlap'), textPixelRatio, posMatrix);
-                    placeIcon = placedIconBoxes.length > 0;
+                    placeIcon = placedIconBoxes.box.length > 0;
+                    offscreen = offscreen && placedIconBoxes.offscreen;
                 }
 
                 // Combine the scales for icons and text.
@@ -177,19 +180,19 @@ class Placement {
                     placeIcon = placeIcon && placeText;
                 }
 
-                if (placeText && symbolInstance.collisionArrays.textBox) {
-                    this.collisionIndex.insertCollisionBox(placedGlyphBoxes, layout.get('text-ignore-placement'), tileKey, sourceID, symbolInstance.textBoxStartIndex);
+                if (placeText && placedGlyphBoxes) {
+                    this.collisionIndex.insertCollisionBox(placedGlyphBoxes.box, layout.get('text-ignore-placement'), tileKey, sourceID, symbolInstance.textBoxStartIndex);
                 }
-                if (placeIcon && symbolInstance.collisionArrays.iconBox) {
-                    this.collisionIndex.insertCollisionBox(placedIconBoxes, layout.get('icon-ignore-placement'), tileKey, sourceID, symbolInstance.iconBoxStartIndex);
+                if (placeIcon && placedIconBoxes) {
+                    this.collisionIndex.insertCollisionBox(placedIconBoxes.box, layout.get('icon-ignore-placement'), tileKey, sourceID, symbolInstance.iconBoxStartIndex);
                 }
-                if (placeText && symbolInstance.collisionArrays.textCircles) {
-                    this.collisionIndex.insertCollisionCircles(placedGlyphCircles, layout.get('text-ignore-placement'), tileKey, sourceID, symbolInstance.textBoxStartIndex);
+                if (placeText && placedGlyphCircles) {
+                    this.collisionIndex.insertCollisionCircles(placedGlyphCircles.circles, layout.get('text-ignore-placement'), tileKey, sourceID, symbolInstance.textBoxStartIndex);
                 }
 
                 assert(symbolInstance.crossTileID !== 0);
 
-                this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText, placeIcon, justReloaded);
+                this.placements[symbolInstance.crossTileID] = new JointPlacement(placeText, placeIcon, offscreen || justReloaded);
                 seenCrossTileIDs[symbolInstance.crossTileID] = true;
             }
         }
