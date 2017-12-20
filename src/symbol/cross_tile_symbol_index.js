@@ -11,34 +11,15 @@ import type Tile from '../source/tile';
 /*
     The CrossTileSymbolIndex generally works on the assumption that
     a conceptual "unique symbol" can be identified by the text of
-    the label combined with the anchor point. The goal is to keep
-    symbol opacity states (determined by collision detection animations)
-    consistent as we switch tile resolutions.
+    the label combined with the anchor point. The goal is to assign
+    these conceptual "unique symbols" a shared crossTileID that can be
+    used by Placement to keep fading opacity states consistent and to
+    deduplicate labels.
 
-    Whenever we add a label, we look for duplicates at lower resolution,
-    and if we find one, we copy its opacity state. If we find duplicates
-    at higher resolution, we mark the added label as "blocked".
-
-    When we remove a label that's currently showing, we look for duplicates
-    at higher resolution, and if we find one we copy our opacity state
-    to that label.
-
-    The code mostly assumes that at any given time a "unique symbol" will have
-    one "non-duplicate" entry, and that the rest of the entries in the
-    index will all be marked as duplicate. This is not necessarily true:
-
-    (1) The code searches child/parent hierarchies for duplicates, but it
-        is possible for the source to contain symbols with anchors on tile
-        boundaries, where the symbol does not stay in the same hierarchy
-        at all zoom levels.
-    (2) A high resolution tile may contain two symbols with the same label
-        but different anchor points. At lower resolution, both of those
-        symbols will appear to be the same.
-
-    In the cases that violate our assumptions, copying opacities between
-    zoom levels won't work as expected. However, the highest resolution
-    tile should always "win", so that after some fade flicker the right
-    label will show.
+    The CrossTileSymbolIndex indexes all the current symbol instances and
+    their crossTileIDs. When a symbol bucket gets added or updated, the
+    index assigns a crossTileID to each of it's symbol instances by either
+    matching it with an existing id or assigning a new one.
 */
 
 // Round anchor positions to roughly 4 pixel grid
