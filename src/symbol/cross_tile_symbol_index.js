@@ -144,31 +144,21 @@ class CrossTileSymbolLayerIndex {
             return false;
         }
 
-        let minZoom = 25;
-        let maxZoom = 0;
         for (const zoom in this.indexes) {
-            minZoom = Math.min(+zoom, minZoom);
-            maxZoom = Math.max(+zoom, maxZoom);
-        }
-
-        // make all higher-res child tiles block duplicate labels in this tile
-        for (let z = maxZoom; z > tileID.overscaledZ; z--) {
-            const zoomIndexes = this.indexes[z];
-            for (const id in zoomIndexes) {
-                const childIndex = zoomIndexes[(id: any)];
-                if (!childIndex.tileID.isChildOf(tileID)) continue;
-                // Mark labels in this tile blocked, and don't copy opacity state
-                // into this tile
-                childIndex.findMatches(bucket.symbolInstances, tileID);
-            }
-        }
-
-        // make this tile block duplicate labels in lower-res parent tiles
-        for (let z = tileID.overscaledZ; z >= minZoom; z--) {
-            const parentCoord = tileID.scaledTo(z);
-            const parentIndex = this.indexes[z] && this.indexes[z][parentCoord.key];
-            if (parentIndex) {
-                parentIndex.findMatches(bucket.symbolInstances, tileID);
+            const zoomIndexes = this.indexes[zoom];
+            if (Number(zoom) > tileID.overscaledZ) {
+                for (const id in zoomIndexes) {
+                    const childIndex = zoomIndexes[id];
+                    if (childIndex.tileID.isChildOf(tileID)) {
+                        childIndex.findMatches(bucket.symbolInstances, tileID);
+                    }
+                }
+            } else {
+                const parentCoord = tileID.scaledTo(Number(zoom));
+                const parentIndex = zoomIndexes[parentCoord.key];
+                if (parentIndex) {
+                    parentIndex.findMatches(bucket.symbolInstances, tileID);
+                }
             }
         }
 
@@ -178,6 +168,7 @@ class CrossTileSymbolLayerIndex {
                 symbolInstance.crossTileID = crossTileIDs.generate();
             }
         }
+
         if (this.indexes[tileID.overscaledZ] === undefined) {
             this.indexes[tileID.overscaledZ] = {};
         }
