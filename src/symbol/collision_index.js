@@ -381,7 +381,7 @@ class CollisionIndex {
     }
 
     isOffscreen(x1: number, y1: number, x2: number, y2: number) {
-        return x2 < -viewportPadding || x1 >= this.screenRightBoundary || y2 < -viewportPadding || y1 > this.screenBottomBoundary;
+        return x2 < viewportPadding || x1 >= this.screenRightBoundary || y2 < viewportPadding || y1 > this.screenBottomBoundary;
     }
 }
 
