@@ -965,7 +965,8 @@ class Style extends Evented {
                     .sort((a, b) => (b.tileID.overscaledZ - a.tileID.overscaledZ) || (a.tileID.isLessThan(b.tileID) ? -1 : 1));
             }
 
-            if (this.crossTileSymbolIndex.addLayer(styleLayer, layerTiles[styleLayer.source])) symbolBucketsChanged = true;
+            const layerBucketsChanged = this.crossTileSymbolIndex.addLayer(styleLayer, layerTiles[styleLayer.source]);
+            symbolBucketsChanged = symbolBucketsChanged || layerBucketsChanged;
         }
 
         // Anything that changes our "in progress" layer and tile indices requires us
