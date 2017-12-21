@@ -85,6 +85,8 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
     _geoJSONIndexes: { [string]: GeoJSONIndex };
     loadGeoJSON: LoadGeoJSON;
     state: SourceState;
+    pendingCallback: Callback<void>;
+    pendingLoadDataParams: LoadGeoJSONParameters;
 
     /**
      * @param [loadGeoJSON] Optional method for custom loading/parsing of
@@ -99,8 +101,6 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
         // object mapping source ids to geojson-vt-like tile indexes
         this._geoJSONIndexes = {};
         this.state = 'Idle';
-        this.loadDataReceived = 0;
-        this.loadDataExecuted = 0;
     }
 
     /**
@@ -111,6 +111,11 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
      * Defers to {@link GeoJSONWorkerSource#loadGeoJSON} for the fetching/parsing,
      * expecting `callback(error, data)` to be called with either an error or a
      * parsed GeoJSON object.
+     *
+     * When `loadData` requests come in faster than they can be processed,
+     * they are coalesced into a single request using the latest data.
+     * See {@link GeoJSONWorkerSource#coalesce}
+     *
      * @param params
      * @param params.source The id of the source.
      * @param callback
@@ -118,20 +123,23 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
     loadData(params: LoadGeoJSONParameters, callback: Callback<void>) {
         this.pendingCallback = callback;
         this.pendingLoadDataParams = params;
-        this.loadDataReceived++;
         if (this.state !== 'Idle') {
-            console.log("Received while coalescing");
             this.state = 'NeedsLoadData';
         } else {
             this.state = 'Coalescing';
-            console.log("Load from Idle");
-            this.loadDataInternal();
+            this._loadData();
         }
     }
 
-    loadDataInternal() {
+    /**
+     * Internal implementation: called directly by `loadData`
+     * or by `coalesce` using stored parameters.
+     */
+    _loadData() {
         const callback = this.pendingCallback;
         const params = this.pendingLoadDataParams;
+        delete this.pendingCallback;
+        delete this.pendingLoadDataParams;
         this.loadGeoJSON(params, (err, data) => {
             if (err || !data) {
                 return callback(err);
@@ -150,23 +158,36 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
 
                 this.loaded[params.source] = {};
                 callback(null);
-                // Don't know how to post to my own message queue, so instead post back to main thread
-                // and have the response callback do the coalescing
-                this.actor.send('coalesce', null, this.coalesce.bind(this));
-                this.loadDataExecuted++;
             }
         });
     }
 
+    /**
+     * While processing `loadData`, we coalesce all further
+     * `loadData` messages into a single call to _loadData
+     * that will happen once we've finished processing the
+     * first message. {@link GeoJSONSource#_updateWorkerData}
+     * is responsible for sending us the `coalesce` message
+     * at the time it receives a response from `loadData`
+     *
+     *          State: Idle
+     *          ↑          |
+     *     'coalesce'   'loadData'
+     *          |     (triggers load)
+     *          |          ↓
+     *        State: Coalescing
+     *          ↑          |
+     *   (triggers load)   |
+     *     'coalesce'   'loadData'
+     *          |          ↓
+     *        State: NeedsLoadData
+     */
     coalesce() {
         if (this.state === 'Coalescing') {
-            console.log("Return to idle");
-            console.log(`${this.loadDataExecuted} out of ${this.loadDataReceived}, (${(this.loadDataExecuted/this.loadDataReceived)*100}%)`);
             this.state = 'Idle';
         } else if (this.state === 'NeedsLoadData') {
             this.state = 'Coalescing';
-            console.log("Load from NeedsLoadData");
-            this.loadDataInternal();
+            this._loadData();
         }
     }
 

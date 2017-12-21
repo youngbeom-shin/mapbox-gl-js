@@ -987,10 +987,6 @@ class Style extends Evented {
     getGlyphs(mapId: string, params: {stacks: {[string]: Array<number>}}, callback: Callback<{[string]: {[number]: ?StyleGlyph}}>) {
         this.glyphManager.getGlyphs(params.stacks, callback);
     }
-
-    coalesce(mapId: string, params: any, callback: Callback<void>) {
-        callback();
-    }
 }
 
 module.exports = Style;
